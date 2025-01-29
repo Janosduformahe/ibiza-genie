@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { getWeeks, constructUrl } from "./utils/date-utils.ts"
-import { fetchWithRetry } from "./utils/http-utils.ts"
-import { extractEventData } from "./utils/parser-utils.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,67 +12,44 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting party scraping process...');
+    console.log('Starting connectivity test...');
     
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get next 6 months of events
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 6);
+    // Test basic connectivity first
+    const testUrl = 'https://www.ibiza-spotlight.com/night/club-dates/2024/03';
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
     
-    console.log(`Scraping events from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    console.log(`Testing connection to: ${testUrl}`);
     
-    const weeks = getWeeks(startDate, endDate);
-    const events = [];
-
-    // Fetch events for each week with increased delays
-    for (const week of weeks) {
-      const url = constructUrl(week.start, week.end);
-      console.log(`Processing week from ${week.start} to ${week.end}`);
-      console.log(`URL: ${url}`);
-      
-      try {
-        const html = await fetchWithRetry(url);
-        const weekEvents = await extractEventData(html);
-        events.push(...weekEvents);
-
-        console.log(`Found ${weekEvents.length} events for current week`);
-        
-        // Significant delay between requests
-        const delay = 10000 + Math.random() * 5000; // 10-15 seconds
-        console.log(`Waiting ${delay}ms before next request...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
-      } catch (error) {
-        console.error(`Error processing week:`, error);
-        continue;
+    const response = await fetch(testUrl, {
+      headers: {
+        'User-Agent': userAgent,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
       }
-    }
+    });
 
-    console.log(`Total events found: ${events.length}`);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
-    // Insert events into database
-    let successCount = 0;
-    for (const event of events) {
-      const { error } = await supabase
-        .from('events')
-        .upsert(event, { onConflict: 'name,date' });
+    const html = await response.text();
+    console.log('HTML length:', html.length);
+    console.log('First 500 characters of HTML:', html.substring(0, 500));
 
-      if (error) {
-        console.error('Error inserting event:', error);
-      } else {
-        successCount++;
-      }
+    // Check if we're getting a proper HTML response
+    if (html.includes('Access denied') || html.includes('blocked') || html.includes('captcha')) {
+      console.log('WARNING: Possible blocking detected in response content');
+      throw new Error('Access appears to be blocked');
     }
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        message: `Successfully processed ${successCount} out of ${events.length} events` 
+        success: true,
+        status: response.status,
+        htmlLength: html.length,
+        isBlocked: false,
+        message: 'Connection test completed successfully'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -84,9 +58,14 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error during test:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        isBlocked: true,
+        message: 'Connection test failed'
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
