@@ -32,7 +32,7 @@ export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
         <Button 
           type="submit" 
           disabled={disabled || !message.trim()}
-          className="bg-blue-500 hover:bg-blue-600"
+          className="bg-ibiza-azure hover:bg-ibiza-azure/90"
         >
           <Send className="h-4 w-4" />
         </Button>

@@ -4,7 +4,7 @@ import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mountain } from "lucide-react";
+import { Sun } from "lucide-react";
 
 interface Message {
   content: string;
@@ -24,10 +24,8 @@ export const ChatInterface = () => {
   const handleSendMessage = async (content: string) => {
     try {
       setIsLoading(true);
-      // Add user message
       setMessages((prev) => [...prev, { content, isUser: true }]);
 
-      // Call DeepSeek API through Edge Function
       const { data, error } = await supabase.functions.invoke('chat', {
         body: { message: content }
       });
@@ -37,7 +35,6 @@ export const ChatInterface = () => {
         throw error;
       }
 
-      // Add AI response
       setMessages((prev) => [
         ...prev,
         {
@@ -60,7 +57,7 @@ export const ChatInterface = () => {
   return (
     <Card className="chat-container glass-card">
       <div className="flex items-center justify-center p-4 border-b bg-gradient-to-r from-ibiza-azure to-ibiza-night">
-        <Mountain className="h-6 w-6 text-white mr-2" /> {/* Es Vedrà icon */}
+        <Sun className="h-6 w-6 text-white mr-2" />
         <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
       </div>
       <div className="messages-container">

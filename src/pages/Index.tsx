@@ -2,7 +2,7 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Mountain, ShoppingBag, BookOpen } from "lucide-react";
+import { Sun, ShoppingBag, BookOpen } from "lucide-react";
 
 const Index = () => {
   return (
@@ -10,19 +10,19 @@ const Index = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="container mx-auto py-20 px-4">
+      <section className="container mx-auto py-12 md:py-20 px-4">
         <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold text-ibiza-night leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold text-ibiza-night leading-tight">
             Your Ultimate Ibiza Experience Guide
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-lg md:text-xl text-gray-600">
             Discover the magic of Ibiza with our AI-powered guide, exclusive merchandise, and insider tips.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button asChild size="lg" className="bg-ibiza-azure hover:bg-ibiza-azure/90">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button asChild size="lg" className="w-full sm:w-auto bg-ibiza-azure hover:bg-ibiza-azure/90">
               <a href="#chat">Start Exploring</a>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
               <Link to="/shop">Visit Shop</Link>
             </Button>
           </div>
@@ -30,23 +30,23 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto py-20 px-4">
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="text-center space-y-4">
-            <Mountain className="w-12 h-12 mx-auto text-ibiza-azure" />
+      <section className="container mx-auto py-12 md:py-20 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center space-y-4 p-6 rounded-lg bg-white/50 backdrop-blur-sm">
+            <Sun className="w-12 h-12 mx-auto text-ibiza-azure" />
             <h3 className="text-xl font-semibold">AI Travel Guide</h3>
             <p className="text-gray-600">
               Get personalized recommendations and answers about Ibiza instantly
             </p>
           </div>
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-4 p-6 rounded-lg bg-white/50 backdrop-blur-sm">
             <ShoppingBag className="w-12 h-12 mx-auto text-ibiza-azure" />
             <h3 className="text-xl font-semibold">Exclusive Merch</h3>
             <p className="text-gray-600">
               Shop our curated collection of Ibiza-inspired merchandise
             </p>
           </div>
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-4 p-6 rounded-lg bg-white/50 backdrop-blur-sm">
             <BookOpen className="w-12 h-12 mx-auto text-ibiza-azure" />
             <h3 className="text-xl font-semibold">Insider Blog</h3>
             <p className="text-gray-600">
@@ -62,8 +62,8 @@ const Index = () => {
       </section>
       
       {/* SEO Footer */}
-      <footer className="container mx-auto py-12 px-4 text-center text-sm text-gray-500">
-        <p>
+      <footer className="container mx-auto py-8 md:py-12 px-4 text-center text-sm text-gray-500">
+        <p className="max-w-2xl mx-auto">
           Discover Ibiza with our AI-powered guide. Get personalized recommendations for clubs, 
           beaches, restaurants, and events. Shop exclusive merchandise and read insider tips on 
           our blog. Your ultimate companion for experiencing the magic of Ibiza.
