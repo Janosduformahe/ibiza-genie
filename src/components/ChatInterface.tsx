@@ -13,7 +13,7 @@ interface Message {
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      content: "Hello! I'm your Ibiza AI concierge. How can I help you today?",
+      content: "Hello! I'm your Ibiza AI concierge. I can help you discover the best parties, events, and experiences in Ibiza. What would you like to know?",
       isUser: false,
     },
   ]);
@@ -31,7 +31,10 @@ export const ChatInterface = () => {
         body: { message: content }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Chat function error:', error);
+        throw error;
+      }
 
       // Add AI response
       setMessages((prev) => [
