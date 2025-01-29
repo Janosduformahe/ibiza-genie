@@ -1,4 +1,5 @@
 import { ChatInterface } from "@/components/ChatInterface";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -16,6 +17,12 @@ const Index = () => {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Your intelligent companion for discovering the best of Ibiza. From exclusive parties to hidden gems, get personalized recommendations instantly.
           </p>
+          <Link
+            to="/blog"
+            className="inline-block px-6 py-3 bg-ibiza-azure text-white rounded-lg hover:bg-opacity-90 transition-colors"
+          >
+            Read Our Blog
+          </Link>
         </div>
         
         <ChatInterface />
