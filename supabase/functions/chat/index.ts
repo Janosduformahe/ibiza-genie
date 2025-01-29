@@ -36,15 +36,15 @@ serve(async (req) => {
       `${event.name} at ${event.club} on ${new Date(event.date).toLocaleDateString()} - ${event.description}`
     ).join('\n') : ''
 
-    // Call API with the new BIZA key
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    // Call Groq API instead of DeepSeek
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${BIZA_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "llama2-70b-4096",
         messages: [
           {
             role: "system",
