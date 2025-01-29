@@ -13,10 +13,10 @@ serve(async (req) => {
 
   try {
     const { message } = await req.json()
-    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
+    const BIZA_KEY = Deno.env.get('BIZA 1')
     
-    if (!DEEPSEEK_API_KEY) {
-      throw new Error('DeepSeek API key not configured')
+    if (!BIZA_KEY) {
+      throw new Error('BIZA API key not configured')
     }
 
     // Fetch recent events from the database to provide context
@@ -31,23 +31,16 @@ serve(async (req) => {
       .order('date', { ascending: true })
       .limit(5)
 
-    // Prepare system message with event context and personality
+    // Prepare context with events
     const eventsContext = events ? events.map(event => 
       `${event.name} at ${event.club} on ${new Date(event.date).toLocaleDateString()} - ${event.description}`
     ).join('\n') : ''
 
-    const systemMessage = `You are Biza, an AI assistant named after the magical island of Ibiza. You have a warm, friendly personality and deep knowledge of Ibiza's culture, especially its legendary party scene. You speak in a casual, upbeat tone and occasionally use Spanish phrases. Your main purpose is to help visitors discover the best parties and experiences in Ibiza.
-
-Here are some upcoming events you can recommend:
-${eventsContext}
-
-When recommending events, be enthusiastic and provide specific details about the venue, music style, and what makes each event special. If you don't have specific event information for what the user is asking about, you can still provide general guidance about Ibiza's party scene and culture.`
-
-    // Call DeepSeek API
+    // Call API with the new BIZA key
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Authorization': `Bearer ${BIZA_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -55,7 +48,12 @@ When recommending events, be enthusiastic and provide specific details about the
         messages: [
           {
             role: "system",
-            content: systemMessage
+            content: `You are Biza, an AI assistant named after the magical island of Ibiza. You have a warm, friendly personality and deep knowledge of Ibiza's culture, especially its legendary party scene. You speak in a casual, upbeat tone and occasionally use Spanish phrases.
+
+Here are some upcoming events you can recommend:
+${eventsContext}
+
+When recommending events, be enthusiastic and provide specific details about the venue, music style, and what makes each event special. If you don't have specific event information for what the user is asking about, you can still provide general guidance about Ibiza's party scene and culture.`
           },
           {
             role: "user",
@@ -68,10 +66,11 @@ When recommending events, be enthusiastic and provide specific details about the
     })
 
     const result = await response.json()
+    console.log('API Response:', result)
     
     if (!response.ok) {
-      console.error('DeepSeek API error:', result)
-      throw new Error(result.error?.message || 'Failed to get response from DeepSeek')
+      console.error('API error:', result)
+      throw new Error(result.error?.message || 'Failed to get response from API')
     }
 
     return new Response(
