@@ -11,6 +11,6 @@ export interface Product {
   image_url: string | null;
   category: string;
   variants: ProductVariant[];
-  created_at: string | null;
-  updated_at: string | null;
+  created_at?: string;
+  updated_at?: string;
 }

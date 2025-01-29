@@ -25,7 +25,11 @@ const Shop = () => {
         throw error;
       }
       
-      return data as Product[];
+      // Parse the variants JSON field into ProductVariant[]
+      return data.map(product => ({
+        ...product,
+        variants: Array.isArray(product.variants) ? product.variants : []
+      })) as Product[];
     },
   });
 
