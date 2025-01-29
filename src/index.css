@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
  
-    --primary: 187 48% 39%;
+    --primary: 262 83% 58%;
     --primary-foreground: 210 40% 98%;
  
     --secondary: 210 40% 96.1%;
@@ -30,7 +30,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 187 48% 39%;
+    --ring: 262 83% 58%;
  
     --radius: 0.75rem;
   }
@@ -45,12 +45,22 @@
   }
 }
 
+/* Hide scrollbars but keep functionality */
+.messages-container {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.messages-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
 .glass-card {
-  @apply backdrop-blur-md bg-white/30 border border-white/20 shadow-lg;
+  @apply backdrop-blur-md bg-white/20 border border-white/20 shadow-lg;
 }
 
 .chat-container {
-  @apply h-[600px] max-h-[80vh] overflow-hidden flex flex-col;
+  @apply h-[600px] max-h-[80vh] overflow-hidden flex flex-col rounded-xl;
 }
 
 .messages-container {
@@ -62,11 +72,11 @@
 }
 
 .user-message {
-  @apply ml-auto bg-ibiza-azure text-white;
+  @apply ml-auto bg-[#8B5CF6] text-white;
 }
 
 .bot-message {
-  @apply glass-card;
+  @apply glass-card text-white;
 }
 
 .typing-indicator {
@@ -74,5 +84,5 @@
 }
 
 .typing-dot {
-  @apply w-2 h-2 bg-ibiza-azure rounded-full animate-bounce;
+  @apply w-2 h-2 bg-white rounded-full animate-bounce;
 }

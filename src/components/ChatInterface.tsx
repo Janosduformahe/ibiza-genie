@@ -56,7 +56,7 @@ export const ChatInterface = () => {
 
   return (
     <Card className="chat-container glass-card">
-      <div className="flex items-center justify-center p-4 border-b bg-gradient-to-r from-ibiza-azure to-ibiza-night">
+      <div className="flex items-center justify-center p-4 border-b border-white/20 bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] rounded-t-xl">
         <Sun className="h-6 w-6 text-white mr-2" />
         <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
       </div>
