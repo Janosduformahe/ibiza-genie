@@ -7,6 +7,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Rotating User-Agents to look more like real browsers
+const userAgents = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0'
+];
+
+function getRandomUserAgent() {
+  return userAgents[Math.floor(Math.random() * userAgents.length)];
+}
+
 function getWeeks(startDate: Date, endDate: Date) {
   const weeks = [];
   let currentDate = new Date(startDate);
@@ -59,6 +70,33 @@ function constructUrl(weekStart: Date, weekEnd: Date) {
   }
 }
 
+async function fetchWithRetry(url: string, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': getRandomUserAgent(),
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.text();
+    } catch (error) {
+      console.error(`Attempt ${i + 1} failed:`, error);
+      if (i === retries - 1) throw error;
+      // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+    }
+  }
+}
+
 async function extractEventData(html: string) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -69,7 +107,11 @@ async function extractEventData(html: string) {
     return events;
   }
 
+  // Log the HTML structure to debug
+  console.log('HTML Structure:', html.substring(0, 500));
+
   const eventElements = doc.querySelectorAll('.event-item');
+  console.log(`Found ${eventElements.length} event elements`);
   
   for (const element of eventElements) {
     try {
@@ -102,6 +144,7 @@ async function extractEventData(html: string) {
           description,
           lineup
         });
+        console.log(`Successfully extracted event: ${name}`);
       }
     } catch (error) {
       console.error('Error extracting event data:', error);
@@ -140,23 +183,19 @@ serve(async (req) => {
       console.log(`Fetching events from: ${url}`);
       
       try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
-          continue;
-        }
-
-        const html = await response.text();
+        const html = await fetchWithRetry(url);
         const weekEvents = await extractEventData(html);
         events.push(...weekEvents);
 
         console.log(`Found ${weekEvents.length} events for week ${formatDate(week.start)} to ${formatDate(week.end)}`);
         
-        // Add delay between requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Add significant delay between requests to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 5000));
         
       } catch (error) {
         console.error(`Error fetching week ${formatDate(week.start)}:`, error);
+        // Continue with next week instead of stopping completely
+        continue;
       }
     }
 
