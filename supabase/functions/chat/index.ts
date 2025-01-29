@@ -36,7 +36,7 @@ serve(async (req) => {
       `${event.name} at ${event.club} on ${new Date(event.date).toLocaleDateString()} - ${event.description}`
     ).join('\n') : ''
 
-    // Call Groq API instead of DeepSeek
+    // Call Groq API with the correct model
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -44,7 +44,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "llama2-70b-4096",
+        model: "deepseek-r1-distill-llama-70b",
         messages: [
           {
             role: "system",
