@@ -4,7 +4,17 @@ import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Sun } from "lucide-react";
+import { Sun, MessageCircle } from "lucide-react";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "./ui/input";
 
 interface Message {
   content: string;
@@ -19,6 +29,7 @@ export const ChatInterface = () => {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
   const { toast } = useToast();
 
   const handleSendMessage = async (content: string) => {
@@ -54,11 +65,68 @@ export const ChatInterface = () => {
     }
   };
 
+  const handleWhatsAppConnect = async () => {
+    try {
+      if (!phoneNumber.match(/^\+?[1-9]\d{1,14}$/)) {
+        throw new Error("Please enter a valid phone number with country code");
+      }
+
+      const { data, error } = await supabase.functions.invoke('whatsapp', {
+        body: { 
+          message: {
+            phoneNumber: phoneNumber
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "WhatsApp Connected!",
+        description: "You'll receive a message from Biza on WhatsApp shortly.",
+      });
+    } catch (error) {
+      console.error('WhatsApp error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to connect WhatsApp. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="chat-container glass-card">
-      <div className="flex items-center justify-center p-4 border-b border-white/20 bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] rounded-t-xl">
-        <Sun className="h-6 w-6 text-white mr-2" />
-        <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
+      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] rounded-t-xl">
+        <div className="flex items-center">
+          <Sun className="h-6 w-6 text-white mr-2" />
+          <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
+        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Connect with WhatsApp</DialogTitle>
+              <DialogDescription>
+                Get Biza's responses directly on WhatsApp! Enter your phone number with country code (e.g., +34612345678)
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="+34612345678"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+              />
+              <Button onClick={handleWhatsAppConnect}>
+                Connect
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
       <div className="messages-container">
         {messages.map((message, index) => (
