@@ -11,8 +11,8 @@ export const ChatMessage = ({ content, isUser }: ChatMessageProps) => {
       className={cn(
         "message p-4 rounded-lg my-2 max-w-[80%]",
         isUser 
-          ? "user-message ml-auto bg-blue-500 text-white" 
-          : "bot-message mr-auto bg-gray-100"
+          ? "user-message ml-auto bg-ibiza-azure text-white" 
+          : "bot-message mr-auto glass-card"
       )}
     >
       <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>

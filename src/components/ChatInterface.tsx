@@ -4,6 +4,7 @@ import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Mountain } from "lucide-react";
 
 interface Message {
   content: string;
@@ -13,7 +14,7 @@ interface Message {
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      content: "Hello! I'm your Ibiza AI concierge. I can help you discover the best parties, events, and experiences in Ibiza. What would you like to know?",
+      content: "¡Hola! I'm Biza, your Ibiza AI guide. Named after this magical island, I'm here to help you discover the best parties, events, and hidden gems. What would you like to know about our paradise? 🌴✨",
       isUser: false,
     },
   ]);
@@ -40,7 +41,7 @@ export const ChatInterface = () => {
       setMessages((prev) => [
         ...prev,
         {
-          content: data.response || "I apologize, but I'm having trouble processing your request right now.",
+          content: data.response || "Lo siento! I'm having trouble processing your request right now.",
           isUser: false,
         },
       ]);
@@ -58,6 +59,10 @@ export const ChatInterface = () => {
 
   return (
     <Card className="chat-container glass-card">
+      <div className="flex items-center justify-center p-4 border-b bg-gradient-to-r from-ibiza-azure to-ibiza-night">
+        <Mountain className="h-6 w-6 text-white mr-2" /> {/* Es Vedrà icon */}
+        <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
+      </div>
       <div className="messages-container">
         {messages.map((message, index) => (
           <ChatMessage key={index} {...message} />
