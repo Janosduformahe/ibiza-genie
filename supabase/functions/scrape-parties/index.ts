@@ -35,13 +35,23 @@ serve(async (req) => {
 
     // Extract events from the page
     const events = []
-    const eventElements = doc.querySelectorAll('.event-item') // Adjust selector based on actual HTML structure
+    const eventElements = doc.querySelectorAll('.event-item')
     
-    eventElements.forEach((element) => {
+    for (const element of eventElements) {
       const name = element.querySelector('.event-title')?.textContent?.trim()
       const dateText = element.querySelector('.event-date')?.textContent?.trim()
       const club = element.querySelector('.event-venue')?.textContent?.trim()
       const ticketLink = element.querySelector('.ticket-link')?.getAttribute('href')
+      const priceText = element.querySelector('.event-price')?.textContent?.trim()
+      const description = element.querySelector('.event-description')?.textContent?.trim()
+      
+      // Extract music styles from tags
+      const musicStyleElements = element.querySelectorAll('.music-tag')
+      const musicStyle = Array.from(musicStyleElements).map(el => el.textContent?.trim()).filter(Boolean)
+      
+      // Extract lineup from artists list
+      const lineupElements = element.querySelectorAll('.artist-name')
+      const lineup = Array.from(lineupElements).map(el => el.textContent?.trim()).filter(Boolean)
       
       if (name && dateText) {
         const date = new Date(dateText)
@@ -50,9 +60,13 @@ serve(async (req) => {
           date: date.toISOString(),
           club,
           ticket_link: ticketLink,
+          price_range: priceText,
+          music_style: musicStyle,
+          description,
+          lineup
         })
       }
-    })
+    }
 
     console.log(`Found ${events.length} events`)
 
@@ -66,9 +80,13 @@ serve(async (req) => {
             date: event.date,
             club: event.club,
             ticket_link: event.ticket_link,
+            price_range: event.price_range,
+            music_style: event.music_style,
+            description: event.description,
+            lineup: event.lineup
           },
           {
-            onConflict: 'name,date',
+            onConflict: 'name,date'
           }
         )
 

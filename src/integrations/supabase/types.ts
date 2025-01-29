@@ -14,24 +14,36 @@ export type Database = {
           club: string | null
           created_at: string | null
           date: string | null
+          description: string | null
           id: string
+          lineup: string[] | null
+          music_style: string[] | null
           name: string
+          price_range: string | null
           ticket_link: string | null
         }
         Insert: {
           club?: string | null
           created_at?: string | null
           date?: string | null
+          description?: string | null
           id?: string
+          lineup?: string[] | null
+          music_style?: string[] | null
           name: string
+          price_range?: string | null
           ticket_link?: string | null
         }
         Update: {
           club?: string | null
           created_at?: string | null
           date?: string | null
+          description?: string | null
           id?: string
+          lineup?: string[] | null
+          music_style?: string[] | null
           name?: string
+          price_range?: string | null
           ticket_link?: string | null
         }
         Relationships: []
