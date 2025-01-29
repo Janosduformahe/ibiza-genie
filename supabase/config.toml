@@ -1,1 +1,3 @@
 project_id = "wjsjyayhyfjbujnkkhcj"
+[functions.scrape-parties]
+verify_jwt = false
