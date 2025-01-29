@@ -50,6 +50,8 @@ function constructUrl(weekStart: Date, weekEnd: Date) {
   const start = formatDate(weekStart);
   const end = formatDate(weekEnd);
 
+  // If week starts and ends in same month, use base URL
+  // Otherwise, use daterange parameter
   if (weekStart.getMonth() === weekEnd.getMonth()) {
     return `${baseUrl}/${month}`;
   } else {
@@ -57,23 +59,77 @@ function constructUrl(weekStart: Date, weekEnd: Date) {
   }
 }
 
+async function extractEventData(html: string) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const events = [];
+
+  if (!doc) {
+    console.error('Failed to parse HTML');
+    return events;
+  }
+
+  const eventElements = doc.querySelectorAll('.event-item');
+  
+  for (const element of eventElements) {
+    try {
+      const name = element.querySelector('.event-title')?.textContent?.trim();
+      const dateText = element.querySelector('.event-date')?.textContent?.trim();
+      const club = element.querySelector('.event-venue')?.textContent?.trim();
+      const ticketLink = element.querySelector('.ticket-link')?.getAttribute('href');
+      const priceText = element.querySelector('.event-price')?.textContent?.trim();
+      const description = element.querySelector('.event-description')?.textContent?.trim();
+      
+      const musicStyleElements = element.querySelectorAll('.music-tag');
+      const musicStyle = Array.from(musicStyleElements)
+        .map(el => el.textContent?.trim())
+        .filter(Boolean);
+      
+      const lineupElements = element.querySelectorAll('.artist-name');
+      const lineup = Array.from(lineupElements)
+        .map(el => el.textContent?.trim())
+        .filter(Boolean);
+      
+      if (name && dateText) {
+        const date = new Date(dateText);
+        events.push({
+          name,
+          date: date.toISOString(),
+          club,
+          ticket_link: ticketLink,
+          price_range: priceText,
+          music_style: musicStyle,
+          description,
+          lineup
+        });
+      }
+    } catch (error) {
+      console.error('Error extracting event data:', error);
+    }
+  }
+
+  return events;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting party scraping process...')
+    console.log('Starting party scraping process...');
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    // Get next 3 months of events
+    // Get next 6 months of events
     const startDate = new Date();
     const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 3);
+    endDate.setMonth(endDate.getMonth() + 6);
+    
+    console.log(`Scraping events from ${startDate.toISOString()} to ${endDate.toISOString()}`);
     
     const weeks = getWeeks(startDate, endDate);
     const events = [];
@@ -85,50 +141,17 @@ serve(async (req) => {
       
       try {
         const response = await fetch(url);
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        if (!doc) {
-          console.error('Failed to parse HTML for week:', formatDate(week.start));
+        if (!response.ok) {
+          console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
           continue;
         }
 
-        const eventElements = doc.querySelectorAll('.event-item');
-        
-        for (const element of eventElements) {
-          const name = element.querySelector('.event-title')?.textContent?.trim();
-          const dateText = element.querySelector('.event-date')?.textContent?.trim();
-          const club = element.querySelector('.event-venue')?.textContent?.trim();
-          const ticketLink = element.querySelector('.ticket-link')?.getAttribute('href');
-          const priceText = element.querySelector('.event-price')?.textContent?.trim();
-          const description = element.querySelector('.event-description')?.textContent?.trim();
-          
-          const musicStyleElements = element.querySelectorAll('.music-tag');
-          const musicStyle = Array.from(musicStyleElements)
-            .map(el => el.textContent?.trim())
-            .filter(Boolean);
-          
-          const lineupElements = element.querySelectorAll('.artist-name');
-          const lineup = Array.from(lineupElements)
-            .map(el => el.textContent?.trim())
-            .filter(Boolean);
-          
-          if (name && dateText) {
-            const date = new Date(dateText);
-            events.push({
-              name,
-              date: date.toISOString(),
-              club,
-              ticket_link: ticketLink,
-              price_range: priceText,
-              music_style: musicStyle,
-              description,
-              lineup
-            });
-          }
-        }
+        const html = await response.text();
+        const weekEvents = await extractEventData(html);
+        events.push(...weekEvents);
 
+        console.log(`Found ${weekEvents.length} events for week ${formatDate(week.start)} to ${formatDate(week.end)}`);
+        
         // Add delay between requests to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 2000));
         
@@ -137,9 +160,10 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Found ${events.length} events`);
+    console.log(`Total events found: ${events.length}`);
 
     // Insert events into the database
+    let successCount = 0;
     for (const event of events) {
       const { error } = await supabase
         .from('events')
@@ -157,23 +181,25 @@ serve(async (req) => {
           {
             onConflict: 'name,date'
           }
-        )
+        );
 
       if (error) {
         console.error('Error inserting event:', error);
+      } else {
+        successCount++;
       }
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Successfully processed ${events.length} events` 
+        message: `Successfully processed ${successCount} out of ${events.length} events` 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
-    )
+    );
 
   } catch (error) {
     console.error('Error:', error);
@@ -183,6 +209,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
       }
-    )
+    );
   }
-})
+});
