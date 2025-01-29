@@ -3,6 +3,7 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   content: string;
@@ -25,24 +26,29 @@ export const ChatInterface = () => {
       // Add user message
       setMessages((prev) => [...prev, { content, isUser: true }]);
 
-      // TODO: Integrate with DeepSeek API
-      // For now, we'll simulate a response
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            content: "I'm still being configured. Please try again later!",
-            isUser: false,
-          },
-        ]);
-        setIsLoading(false);
-      }, 1000);
+      // Call DeepSeek API through Edge Function
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: { message: content }
+      });
+
+      if (error) throw error;
+
+      // Add AI response
+      setMessages((prev) => [
+        ...prev,
+        {
+          content: data.response || "I apologize, but I'm having trouble processing your request right now.",
+          isUser: false,
+        },
+      ]);
     } catch (error) {
+      console.error('Chat error:', error);
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
