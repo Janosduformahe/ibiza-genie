@@ -4,19 +4,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  category: string;
-  variants: Array<{
-    type: string;
-    options: string[];
-  }>;
-}
+import { Product } from "@/types/product";
 
 const Shop = () => {
   const { toast } = useToast();
@@ -37,7 +25,11 @@ const Shop = () => {
         throw error;
       }
       
-      return data as Product[];
+      // Parse the variants JSON from Supabase into our ProductVariant type
+      return data.map(product => ({
+        ...product,
+        variants: JSON.parse(JSON.stringify(product.variants))
+      })) as Product[];
     },
   });
 
