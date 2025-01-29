@@ -25,15 +25,12 @@ const Shop = () => {
         throw error;
       }
       
-      return data.map(product => ({
-        ...product,
-        variants: JSON.parse(JSON.stringify(product.variants))
-      })) as Product[];
+      return data as Product[];
     },
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-ibiza-sand to-white">
+    <div className="min-h-screen bg-gradient-to-b from-ibiza-sand/50 to-white">
       <Navigation />
       <div className="container mx-auto py-12 px-4">
         <div className="text-center mb-12">
@@ -46,7 +43,7 @@ const Shop = () => {
         
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-ibiza-azure" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

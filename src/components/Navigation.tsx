@@ -7,18 +7,17 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
-import { Mountain, ShoppingBag, BookOpen } from "lucide-react";
+import { Sun, ShoppingBag, BookOpen } from "lucide-react";
 
 export function Navigation() {
   return (
-    <div className="w-full border-b bg-white/50 backdrop-blur-sm">
+    <div className="w-full border-b bg-gradient-to-r from-ibiza-sand to-white/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center px-4">
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link to="/" className="flex items-center space-x-2 font-bold">
-                <Mountain className="h-6 w-6" />
+              <Link to="/" className="flex items-center space-x-2 font-bold text-ibiza-night">
+                <Sun className="h-6 w-6 text-ibiza-azure" />
                 <span>Ibiza Genie</span>
               </Link>
             </NavigationMenuItem>
@@ -29,11 +28,11 @@ export function Navigation() {
                   <li className="row-span-3">
                     <NavigationMenuLink asChild>
                       <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-ibiza-azure/20 to-ibiza-azure/40 p-6 no-underline outline-none focus:shadow-md"
+                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-ibiza-azure/10 to-ibiza-azure/20 p-6 no-underline outline-none focus:shadow-md"
                         to="/"
                       >
-                        <Mountain className="h-6 w-6" />
-                        <div className="mb-2 mt-4 text-lg font-medium">
+                        <Sun className="h-6 w-6 text-ibiza-azure" />
+                        <div className="mb-2 mt-4 text-lg font-medium text-ibiza-night">
                           Ibiza AI Guide
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
@@ -46,7 +45,7 @@ export function Navigation() {
                     <NavigationMenuLink asChild>
                       <Link
                         to="/shop"
-                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-ibiza-sand/50 hover:text-ibiza-night focus:bg-ibiza-sand/50 focus:text-ibiza-night"
                       >
                         <div className="flex items-center gap-2">
                           <ShoppingBag className="h-4 w-4" />
@@ -62,7 +61,7 @@ export function Navigation() {
                     <NavigationMenuLink asChild>
                       <Link
                         to="/blog"
-                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-ibiza-sand/50 hover:text-ibiza-night focus:bg-ibiza-sand/50 focus:text-ibiza-night"
                       >
                         <div className="flex items-center gap-2">
                           <BookOpen className="h-4 w-4" />
@@ -80,7 +79,7 @@ export function Navigation() {
             <NavigationMenuItem>
               <Link
                 to="/shop"
-                className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-ibiza-sand/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-ibiza-sand/40 hover:text-ibiza-night focus:bg-ibiza-sand/40 focus:text-ibiza-night focus:outline-none disabled:pointer-events-none disabled:opacity-50"
               >
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Shop
@@ -89,7 +88,7 @@ export function Navigation() {
             <NavigationMenuItem>
               <Link
                 to="/blog"
-                className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-ibiza-sand/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-ibiza-sand/40 hover:text-ibiza-night focus:bg-ibiza-sand/40 focus:text-ibiza-night focus:outline-none disabled:pointer-events-none disabled:opacity-50"
               >
                 <BookOpen className="mr-2 h-4 w-4" />
                 Blog

@@ -8,7 +8,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border-ibiza-sand/20 hover:shadow-lg transition-shadow">
       {product.image_url && (
         <div className="aspect-square overflow-hidden">
           <img 
@@ -19,17 +19,17 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       )}
       <CardHeader>
-        <CardTitle>{product.name}</CardTitle>
+        <CardTitle className="text-ibiza-night">{product.name}</CardTitle>
         <CardDescription>{product.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold">${product.price}</span>
+          <span className="text-2xl font-bold text-ibiza-azure">${product.price}</span>
           <span className="text-sm text-muted-foreground">{product.category}</span>
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full">Add to Cart</Button>
+        <Button className="w-full bg-ibiza-azure hover:bg-ibiza-azure/90">Add to Cart</Button>
       </CardFooter>
     </Card>
   );
