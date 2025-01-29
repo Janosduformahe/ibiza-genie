@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Navigation } from "@/components/Navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, ShoppingBag } from "lucide-react";
-import { Product } from "@/types/product";
+import { Product, ProductVariant } from "@/types/product";
 
 const Shop = () => {
   const { toast } = useToast();
@@ -28,7 +28,12 @@ const Shop = () => {
       // Parse the variants JSON field into ProductVariant[]
       return data.map(product => ({
         ...product,
-        variants: Array.isArray(product.variants) ? product.variants : []
+        variants: Array.isArray(product.variants) 
+          ? product.variants.map((variant: any): ProductVariant => ({
+              type: variant.type || '',
+              options: Array.isArray(variant.options) ? variant.options : []
+            }))
+          : []
       })) as Product[];
     },
   });
