@@ -13,10 +13,10 @@ serve(async (req) => {
 
   try {
     const { message } = await req.json()
-    const BIZA_KEY = Deno.env.get('BIZA 1')
+    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
     
-    if (!BIZA_KEY) {
-      throw new Error('BIZA API key not configured')
+    if (!DEEPSEEK_API_KEY) {
+      throw new Error('Deepseek API key not configured')
     }
 
     // Fetch recent events from the database to provide context
@@ -36,15 +36,15 @@ serve(async (req) => {
       `${event.name} at ${event.club} on ${new Date(event.date).toLocaleDateString()} - ${event.description}`
     ).join('\n') : ''
 
-    // Call Groq API with the correct model
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // Call Deepseek API
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${BIZA_KEY}`,
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "deepseek-r1-distill-llama-70b",
+        model: "deepseek-chat",
         messages: [
           {
             role: "system",
