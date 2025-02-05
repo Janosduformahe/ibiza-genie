@@ -4,7 +4,7 @@ import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Sun, MessageCircle } from "lucide-react";
+import { Sun, MessageCircle, Palmtree, Sunset, Waves } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -98,9 +98,12 @@ export const ChatInterface = () => {
   return (
     <Card className="chat-container glass-card">
       <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] rounded-t-xl">
-        <div className="flex items-center">
-          <Sun className="h-6 w-6 text-white mr-2" />
+        <div className="flex items-center space-x-2">
+          <Sun className="h-6 w-6 text-white" />
+          <Palmtree className="h-6 w-6 text-white" />
           <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
+          <Waves className="h-6 w-6 text-white" />
+          <Sunset className="h-6 w-6 text-white" />
         </div>
         <Dialog>
           <DialogTrigger asChild>
@@ -132,6 +135,15 @@ export const ChatInterface = () => {
         {messages.map((message, index) => (
           <ChatMessage key={index} {...message} />
         ))}
+        {isLoading && (
+          <div className="typing-indicator glass-card">
+            <div className="flex items-center space-x-2">
+              <div className="typing-dot" style={{ animationDelay: "0ms" }} />
+              <div className="typing-dot" style={{ animationDelay: "200ms" }} />
+              <div className="typing-dot" style={{ animationDelay: "400ms" }} />
+            </div>
+          </div>
+        )}
       </div>
       <ChatInput onSend={handleSendMessage} disabled={isLoading} />
     </Card>
