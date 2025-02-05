@@ -106,11 +106,11 @@ export const ChatInterface = () => {
     <Card 
       className={cn(
         "chat-container glass-card transition-all duration-500 ease-in-out",
-        isExpanded ? "fixed inset-0 m-0 rounded-none z-50" : "max-w-2xl mx-auto"
+        isExpanded ? "fixed inset-0 m-0 rounded-none z-50 h-screen" : "max-w-2xl mx-auto"
       )}
       onClick={() => !isExpanded && setIsExpanded(true)}
     >
-      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-ibiza-azure to-ibiza-night rounded-t-xl">
+      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-ibiza-azure to-ibiza-night">
         <div className="flex items-center space-x-2">
           <Sun className="h-6 w-6 text-white animate-pulse" />
           <Palmtree className="h-6 w-6 text-white animate-bounce" />
@@ -124,7 +124,10 @@ export const ChatInterface = () => {
               variant="ghost" 
               size="icon" 
               className="text-white hover:bg-white/20"
-              onClick={() => setIsExpanded(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(false);
+              }}
             >
               ✕
             </Button>
