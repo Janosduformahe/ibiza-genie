@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "./ui/input";
+import { cn } from "@/lib/utils";
 
 interface Message {
   content: string;
@@ -30,9 +31,15 @@ export const ChatInterface = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
 
   const handleSendMessage = async (content: string) => {
+    if (!isExpanded) {
+      setIsExpanded(true);
+      return;
+    }
+    
     try {
       setIsLoading(true);
       setMessages((prev) => [...prev, { content, isUser: true }]);
@@ -96,56 +103,81 @@ export const ChatInterface = () => {
   };
 
   return (
-    <Card className="chat-container glass-card">
-      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] rounded-t-xl">
+    <Card 
+      className={cn(
+        "chat-container glass-card transition-all duration-500 ease-in-out",
+        isExpanded ? "fixed inset-0 m-0 rounded-none z-50" : "max-w-2xl mx-auto"
+      )}
+      onClick={() => !isExpanded && setIsExpanded(true)}
+    >
+      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-ibiza-azure to-ibiza-night rounded-t-xl">
         <div className="flex items-center space-x-2">
-          <Sun className="h-6 w-6 text-white" />
-          <Palmtree className="h-6 w-6 text-white" />
+          <Sun className="h-6 w-6 text-white animate-pulse" />
+          <Palmtree className="h-6 w-6 text-white animate-bounce" />
           <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
-          <Waves className="h-6 w-6 text-white" />
-          <Sunset className="h-6 w-6 text-white" />
+          <Waves className="h-6 w-6 text-white animate-pulse" />
+          <Sunset className="h-6 w-6 text-white animate-bounce" />
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-              <MessageCircle className="h-5 w-5" />
+        {isExpanded && (
+          <>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:bg-white/20"
+              onClick={() => setIsExpanded(false)}
+            >
+              ✕
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Connect with WhatsApp</DialogTitle>
-              <DialogDescription>
-                Get Biza's responses directly on WhatsApp! Enter your phone number with country code (e.g., +34612345678)
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center space-x-2">
-              <Input
-                placeholder="+34612345678"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-              <Button onClick={handleWhatsAppConnect}>
-                Connect
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                  <MessageCircle className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Connect with WhatsApp</DialogTitle>
+                  <DialogDescription>
+                    Get Biza's responses directly on WhatsApp! Enter your phone number with country code (e.g., +34612345678)
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="+34612345678"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                  <Button onClick={handleWhatsAppConnect}>
+                    Connect
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
       </div>
-      <div className="messages-container">
+      <div className={cn(
+        "messages-container transition-all duration-500",
+        isExpanded ? "h-[calc(100vh-8rem)]" : "h-[400px]"
+      )}>
         {messages.map((message, index) => (
           <ChatMessage key={index} {...message} />
         ))}
         {isLoading && (
           <div className="typing-indicator glass-card">
             <div className="flex items-center space-x-2">
-              <div className="typing-dot" style={{ animationDelay: "0ms" }} />
-              <div className="typing-dot" style={{ animationDelay: "200ms" }} />
-              <div className="typing-dot" style={{ animationDelay: "400ms" }} />
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+              <div className="typing-dot" />
             </div>
           </div>
         )}
       </div>
-      <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+      <ChatInput 
+        onSend={handleSendMessage} 
+        disabled={isLoading} 
+        placeholder={isExpanded ? "Ask about parties, clubs, or events in Ibiza..." : "Click to start chatting with Biza..."}
+      />
     </Card>
   );
 };
