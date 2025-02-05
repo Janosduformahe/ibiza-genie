@@ -132,13 +132,6 @@ export const ChatInterface = () => {
         {messages.map((message, index) => (
           <ChatMessage key={index} {...message} />
         ))}
-        {isLoading && (
-          <div className="typing-indicator">
-            <div className="typing-dot" style={{ animationDelay: "0ms" }} />
-            <div className="typing-dot" style={{ animationDelay: "200ms" }} />
-            <div className="typing-dot" style={{ animationDelay: "400ms" }} />
-          </div>
-        )}
       </div>
       <ChatInput onSend={handleSendMessage} disabled={isLoading} />
     </Card>
