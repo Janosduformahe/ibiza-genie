@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Sun, MessageCircle, Palmtree, Sunset, Waves } from "lucide-react";
 import { Button } from "./ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Input } from "./ui/input";
 
 interface Message {
@@ -30,6 +36,8 @@ export const ChatInterface = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
   const { toast } = useToast();
 
   const handleSendMessage = async (content: string) => {
@@ -95,8 +103,8 @@ export const ChatInterface = () => {
     }
   };
 
-  return (
-    <Card className="chat-container glass-card">
+  const ChatContent = () => (
+    <Card className="chat-container glass-card h-[90vh] md:h-[80vh] w-full max-w-4xl mx-auto">
       <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] rounded-t-xl">
         <div className="flex items-center space-x-2">
           <Sun className="h-6 w-6 text-white" />
@@ -147,5 +155,39 @@ export const ChatInterface = () => {
       </div>
       <ChatInput onSend={handleSendMessage} disabled={isLoading} />
     </Card>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+        <DrawerTrigger asChild>
+          <Button 
+            size="lg"
+            className="fixed bottom-4 right-4 rounded-full w-16 h-16 shadow-lg bg-gradient-to-r from-[#8B5CF6] to-[#D946EF]"
+          >
+            <MessageCircle className="h-8 w-8" />
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent className="h-[95vh]">
+          <ChatContent />
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button 
+          size="lg"
+          className="fixed bottom-4 right-4 rounded-full w-16 h-16 shadow-lg bg-gradient-to-r from-[#8B5CF6] to-[#D946EF]"
+        >
+          <MessageCircle className="h-8 w-8" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-[95vw] w-full h-[90vh]">
+        <ChatContent />
+      </DialogContent>
+    </Dialog>
   );
 };
