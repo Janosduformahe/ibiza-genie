@@ -1,21 +1,11 @@
 import { useState } from "react";
-import { ChatMessage } from "./ChatMessage";
-import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Sun, MessageCircle, Palmtree, Sunset, Waves } from "lucide-react";
-import { Button } from "./ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
+import { ChatInput } from "./ChatInput";
+import { ChatHeader } from "./ChatHeader";
+import { MessagesContainer } from "./MessagesContainer";
 
 interface Message {
   content: string;
@@ -102,85 +92,38 @@ export const ChatInterface = () => {
     }
   };
 
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(false);
+  };
+
   return (
     <Card 
       className={cn(
         "chat-container glass-card transition-all duration-500 ease-in-out",
-        isExpanded ? "fixed inset-0 m-0 rounded-none z-50 h-screen" : "max-w-2xl mx-auto"
+        isExpanded ? "fixed inset-0 m-0 rounded-none z-50 min-h-screen" : "max-w-2xl mx-auto"
       )}
       onClick={() => !isExpanded && setIsExpanded(true)}
     >
-      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-ibiza-azure to-ibiza-night">
-        <div className="flex items-center space-x-2">
-          <Sun className="h-6 w-6 text-white animate-pulse" />
-          <Palmtree className="h-6 w-6 text-white animate-bounce" />
-          <h2 className="text-lg font-semibold text-white">Chat with Biza</h2>
-          <Waves className="h-6 w-6 text-white animate-pulse" />
-          <Sunset className="h-6 w-6 text-white animate-bounce" />
-        </div>
-        {isExpanded && (
-          <>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-white hover:bg-white/20"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(false);
-              }}
-            >
-              ✕
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                  <MessageCircle className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Connect with WhatsApp</DialogTitle>
-                  <DialogDescription>
-                    Get Biza's responses directly on WhatsApp! Enter your phone number with country code (e.g., +34612345678)
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    placeholder="+34612345678"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                  />
-                  <Button onClick={handleWhatsAppConnect}>
-                    Connect
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
+      <div className="flex flex-col h-full">
+        <ChatHeader 
+          isExpanded={isExpanded}
+          onClose={handleClose}
+          onWhatsAppConnect={handleWhatsAppConnect}
+          phoneNumber={phoneNumber}
+          setPhoneNumber={setPhoneNumber}
+        />
+        <MessagesContainer 
+          messages={messages}
+          isLoading={isLoading}
+          isExpanded={isExpanded}
+        />
+        <ChatInput 
+          onSend={handleSendMessage} 
+          disabled={isLoading} 
+          placeholder={isExpanded ? "Ask about parties, clubs, or events in Ibiza..." : "Click to start chatting with Biza..."}
+        />
       </div>
-      <div className={cn(
-        "messages-container transition-all duration-500",
-        isExpanded ? "h-[calc(100vh-8rem)]" : "h-[400px]"
-      )}>
-        {messages.map((message, index) => (
-          <ChatMessage key={index} {...message} />
-        ))}
-        {isLoading && (
-          <div className="typing-indicator glass-card">
-            <div className="flex items-center space-x-2">
-              <div className="typing-dot" />
-              <div className="typing-dot" />
-              <div className="typing-dot" />
-            </div>
-          </div>
-        )}
-      </div>
-      <ChatInput 
-        onSend={handleSendMessage} 
-        disabled={isLoading} 
-        placeholder={isExpanded ? "Ask about parties, clubs, or events in Ibiza..." : "Click to start chatting with Biza..."}
-      />
     </Card>
   );
 };
