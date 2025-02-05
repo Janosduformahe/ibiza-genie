@@ -105,7 +105,7 @@ export const ChatInterface = () => {
 
   const ChatContent = () => (
     <Card className="chat-container glass-card h-[90vh] md:h-[80vh] w-full max-w-4xl mx-auto">
-      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] rounded-t-xl">
+      <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-ibiza-azure to-ibiza-sunset rounded-t-xl">
         <div className="flex items-center space-x-2">
           <Sun className="h-6 w-6 text-white" />
           <Palmtree className="h-6 w-6 text-white" />
@@ -157,16 +157,25 @@ export const ChatInterface = () => {
     </Card>
   );
 
+  const ChatButton = () => (
+    <div className="fixed bottom-8 right-8 flex flex-col items-end space-y-4">
+      <div className="animate-bounce bg-ibiza-night text-white px-4 py-2 rounded-lg shadow-lg">
+        Ask Biza anything about Ibiza! 🌴
+      </div>
+      <Button 
+        size="lg"
+        className="rounded-full w-20 h-20 shadow-xl bg-gradient-to-r from-ibiza-azure to-ibiza-sunset hover:scale-105 transition-all duration-300 ease-in-out"
+      >
+        <MessageCircle className="h-10 w-10" />
+      </Button>
+    </div>
+  );
+
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
-          <Button 
-            size="lg"
-            className="fixed bottom-4 right-4 rounded-full w-16 h-16 shadow-lg bg-gradient-to-r from-[#8B5CF6] to-[#D946EF]"
-          >
-            <MessageCircle className="h-8 w-8" />
-          </Button>
+          <ChatButton />
         </DrawerTrigger>
         <DrawerContent className="h-[95vh]">
           <ChatContent />
@@ -178,12 +187,7 @@ export const ChatInterface = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          size="lg"
-          className="fixed bottom-4 right-4 rounded-full w-16 h-16 shadow-lg bg-gradient-to-r from-[#8B5CF6] to-[#D946EF]"
-        >
-          <MessageCircle className="h-8 w-8" />
-        </Button>
+        <ChatButton />
       </DialogTrigger>
       <DialogContent className="max-w-[95vw] w-full h-[90vh]">
         <ChatContent />

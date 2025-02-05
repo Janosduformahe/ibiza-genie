@@ -53,10 +53,14 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         ibiza: {
-          sand: "#F5E6D3",
-          azure: "#2A9D8F",
-          sunset: "#E76F51",
-          night: "#264653",
+          sand: "#F5E6D3",      // Warm sand color for backgrounds
+          azure: "#2A9D8F",     // Turquoise blue for primary actions
+          sunset: "#E76F51",    // Coral orange for accents
+          night: "#264653",     // Deep blue for text and headers
+          light: "#F8F9FA",     // Light background
+          muted: "#6C757D",     // Muted text
+          accent: "#E9ECEF",    // Subtle accents
+          hover: "#CED4DA",     // Hover states
         },
       },
       borderRadius: {
