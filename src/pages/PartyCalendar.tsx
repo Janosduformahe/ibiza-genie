@@ -1,21 +1,31 @@
+
 import { useState } from "react";
+import { startOfToday } from "date-fns";
 import { Navigation } from "@/components/Navigation";
 import { CalendarView } from "@/components/events/CalendarView";
 import { DailyEvents } from "@/components/events/DailyEvents";
 import { useEvents } from "@/hooks/use-events";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
-import { format, startOfToday } from "date-fns";
-import { CalendarDays, PartyPopper, Filter, Globe, Clock, RefreshCw } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { CalendarHeader } from "@/components/events/CalendarHeader";
+import { EventFilters } from "@/components/events/EventFilters";
+import { EventActionButtons } from "@/components/events/EventActionButtons";
+import { EventNotifications } from "@/components/events/EventNotifications";
+import { EventHighlights } from "@/components/events/EventHighlights";
+import { EventScheduleInfo } from "@/components/events/EventScheduleInfo";
+import { CalendarFooter } from "@/components/events/CalendarFooter";
 
 const PartyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined);
-  const [isScraperRunning, setIsScraperRunning] = useState(false);
-  const { data: events = [], isLoading, getEventsForDay, refetch, isError, error } = useEvents(selectedDate, selectedSource);
+  
+  const { 
+    data: events = [], 
+    isLoading, 
+    getEventsForDay, 
+    refetch, 
+    isError, 
+    error 
+  } = useEvents(selectedDate, selectedSource);
+  
   const dailyEvents = getEventsForDay(events, selectedDate);
 
   const handleDateSelect = (date: Date) => {
@@ -32,116 +42,8 @@ const PartyCalendar = () => {
     if (upcomingEvent) {
       const nextPartyDate = new Date(upcomingEvent.date);
       setSelectedDate(nextPartyDate);
-      toast({
-        title: "Next party found!",
-        description: `Showing events for ${format(nextPartyDate, "EEEE, MMMM do")}`,
-      });
     } else {
-      toast({
-        title: "No upcoming parties found",
-        description: "Try selecting a different month to find more events",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const runScraperNow = async () => {
-    if (isScraperRunning) return;
-    
-    setIsScraperRunning(true);
-    toast({
-      title: "Scraper started",
-      description: "Fetching events with IP rotation. This may take a few minutes.",
-    });
-    
-    try {
-      console.log("Starting scraper with maxPages=30");
-      
-      const { data, error } = await supabase.functions.invoke('scrape-jigsaw', {
-        body: { 
-          maxPages: 30,
-          sources: ['clubtickets.com', 'ibiza-spotlight.com']
-        }
-      });
-      
-      if (error) {
-        console.error("Error running scraper:", error);
-        toast({
-          title: "Scraper error",
-          description: `Failed to run the event scraper: ${error.message || "Unknown error"}`,
-          variant: "destructive",
-        });
-      } else {
-        console.log("Scraper response:", data);
-        
-        if (!data || (data.count !== undefined && data.count === 0)) {
-          if (data && data.results && Array.isArray(data.results)) {
-            const errorSources = data.results.filter(r => !r.success);
-            
-            if (errorSources.length > 0) {
-              errorSources.forEach(result => {
-                toast({
-                  title: `${result.source}: Failed`,
-                  description: `Error: ${result.error}`,
-                  variant: "destructive",
-                });
-              });
-              
-              toast({
-                title: "Scraping encountered issues",
-                description: "Some sources couldn't be scraped. The system tried alternative methods automatically.",
-                variant: "destructive",
-              });
-            } else {
-              toast({
-                title: "No new events found",
-                description: "The scraper ran successfully but didn't find any new events to add.",
-                variant: "default",
-              });
-            }
-          } else {
-            toast({
-              title: "No events found",
-              description: "The scraper didn't find any events. This might be because the websites have changed their structure.",
-              variant: "default",
-            });
-          }
-        } else {
-          toast({
-            title: "Events scraping completed!",
-            description: `Successfully scraped ${data.count || 0} new events.`,
-          });
-          
-          if (data && data.results && Array.isArray(data.results)) {
-            data.results.forEach(result => {
-              const title = result.success 
-                ? `${result.source}: Completed` 
-                : `${result.source}: Failed`;
-              
-              const description = result.success
-                ? `Added ${result.inserted} events, skipped ${result.skipped} duplicates, ${result.invalid || 0} invalid`
-                : `Error: ${result.error}`;
-                
-              toast({
-                title: title,
-                description: description,
-                variant: result.success ? "default" : "destructive",
-              });
-            });
-          }
-        }
-        
-        refetch();
-      }
-    } catch (err) {
-      console.error("Error invoking scraper function:", err);
-      toast({
-        title: "Scraper error",
-        description: `Failed to run the event scraper: ${err instanceof Error ? err.message : "Unknown error"}`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsScraperRunning(false);
+      // Toast notification is handled in the EventCalendar component
     }
   };
 
@@ -150,113 +52,35 @@ const PartyCalendar = () => {
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col gap-2 mb-6 text-white">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <PartyPopper className="h-8 w-8" />
-            Ibiza Party Calendar
-          </h1>
-          <p className="opacity-90">Find the hottest parties and events happening on the island</p>
-        </div>
+        <CalendarHeader />
         
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-white" />
-            <span className="text-white">Filter by source:</span>
-            <Select onValueChange={handleSourceChange} defaultValue="all">
-              <SelectTrigger className="w-[180px] bg-white/90">
-                <SelectValue placeholder="All sources" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All sources</SelectItem>
-                <SelectItem value="clubtickets.com">Club Tickets</SelectItem>
-                <SelectItem value="ibiza-spotlight.com">Ibiza Spotlight</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <EventFilters onSourceChange={handleSourceChange} />
           
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              onClick={runScraperNow}
-              className="bg-white text-primary hover:bg-white/90"
-              disabled={isScraperRunning}
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${isScraperRunning ? 'animate-spin' : ''}`} />
-              {isScraperRunning ? "Scraping Events..." : "Run Scraper Now"}
-            </Button>
-            
-            <Button 
-              onClick={jumpToNextParty}
-              className="bg-white text-primary hover:bg-white/90"
-            >
-              <PartyPopper className="mr-2 h-4 w-4" />
-              Find Next Party
-            </Button>
-          </div>
+          <EventActionButtons 
+            onFindNextParty={jumpToNextParty}
+            refetchEvents={refetch}
+          />
         </div>
         
-        {isError && (
-          <Alert className="mb-4 bg-white/90 border-red-500">
-            <AlertTitle className="text-red-600">Error loading events</AlertTitle>
-            <AlertDescription>
-              {error?.message || "There was a problem loading the events. Please try again later."}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {events.length === 0 && !isLoading && !isError && (
-          <Alert className="mb-4 bg-white/90">
-            <AlertTitle>No events found</AlertTitle>
-            <AlertDescription>
-              Click "Run Scraper Now" to fetch events from Ibiza party websites. The scraper uses IP rotation to avoid being blocked.
-            </AlertDescription>
-          </Alert>
-        )}
+        <EventNotifications 
+          isError={isError}
+          error={error}
+          events={events}
+          isLoading={isLoading}
+        />
         
         <div className="grid md:grid-cols-[300px_1fr] gap-6">
           <div className="order-2 md:order-1">
             <CalendarView onSelectDate={handleDateSelect} selectedDate={selectedDate} />
             
-            <div className="bg-white rounded-lg shadow p-4 mt-4">
-              <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                Upcoming Highlights
-              </h3>
-              <ul className="space-y-2">
-                {isLoading ? (
-                  Array(3).fill(0).map((_, i) => (
-                    <li key={i} className="h-8 bg-muted rounded animate-pulse" />
-                  ))
-                ) : events.length > 0 ? (
-                  events.slice(0, 5).map((event) => (
-                    <li 
-                      key={event.id} 
-                      className="p-2 text-sm rounded hover:bg-muted cursor-pointer transition-colors"
-                      onClick={() => handleDateSelect(new Date(event.date))}
-                    >
-                      <div className="font-medium truncate">{event.name}</div>
-                      <div className="text-xs text-muted-foreground flex justify-between">
-                        <span>{format(new Date(event.date), "MMM d 'at' h:mm a")}</span>
-                        {event.source && <span className="text-primary opacity-70">{event.source}</span>}
-                      </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="text-sm text-muted-foreground">
-                    No events found for the selected period.
-                  </li>
-                )}
-              </ul>
-            </div>
+            <EventHighlights 
+              events={events}
+              isLoading={isLoading}
+              onSelectDate={handleDateSelect}
+            />
             
-            <div className="bg-white/90 rounded-lg shadow p-4 mt-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="font-medium">Auto-Update Schedule</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Our system automatically scrapes event data every 48 hours from various Ibiza venues to keep this calendar up-to-date with the latest parties.
-              </p>
-            </div>
+            <EventScheduleInfo />
           </div>
           
           <div className="order-1 md:order-2">
@@ -268,12 +92,7 @@ const PartyCalendar = () => {
           </div>
         </div>
         
-        <div className="mt-8 flex justify-center text-white/80 text-sm">
-          <div className="flex items-center gap-1">
-            <Globe className="h-4 w-4" />
-            <span>Events are automatically updated every 48 hours with IP rotation</span>
-          </div>
-        </div>
+        <CalendarFooter />
       </div>
     </div>
   );
