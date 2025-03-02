@@ -58,8 +58,12 @@ const PartyCalendar = () => {
     try {
       console.log("Starting scraper with maxPages=30");
       
+      // Fix URL error by using the proper function invocation with error handling
       const { data, error } = await supabase.functions.invoke('scrape-jigsaw', {
-        body: { maxPages: 30 }
+        body: { 
+          maxPages: 30,
+          sources: ['clubtickets.com', 'ibiza-spotlight.com']
+        }
       });
       
       if (error) {
@@ -72,7 +76,7 @@ const PartyCalendar = () => {
       } else {
         console.log("Scraper response:", data);
         
-        if (data.count === 0) {
+        if (!data || (data.count !== undefined && data.count === 0)) {
           toast({
             title: "No new events found",
             description: "The scraper didn't find any new events to add. Check logs for details.",
@@ -86,7 +90,7 @@ const PartyCalendar = () => {
         }
         
         // Show detailed results by source
-        if (data.results && Array.isArray(data.results)) {
+        if (data && data.results && Array.isArray(data.results)) {
           data.results.forEach(result => {
             const title = result.success ? `${result.source}: Completed` : `${result.source}: Failed`;
             const description = result.success
@@ -165,8 +169,17 @@ const PartyCalendar = () => {
           </div>
         </div>
         
+        {isError && (
+          <Alert className="mb-4 bg-white/90 border-red-500">
+            <AlertTitle className="text-red-600">Error loading events</AlertTitle>
+            <AlertDescription>
+              {error?.message || "There was a problem loading the events. Please try again later."}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Add alert for empty calendar with instructions */}
-        {events.length === 0 && !isLoading && (
+        {events.length === 0 && !isLoading && !isError && (
           <Alert className="mb-4 bg-white/90">
             <AlertTitle>No events found</AlertTitle>
             <AlertDescription>

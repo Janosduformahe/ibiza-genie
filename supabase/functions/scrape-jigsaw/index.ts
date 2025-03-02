@@ -1,295 +1,203 @@
 
-// Follow this setup guide to integrate the Deno runtime into your application:
-// https://deno.land/manual/examples/deploy_node_npm
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders } from "../_shared/cors.ts";
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.48.1'
-import { JigsawStack } from 'https://esm.sh/jigsawstack@0.0.27'
+const JIGSAW_API_KEY = Deno.env.get("JIGSAW") || "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Initialize the Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// Function to validate a date string
+function isValidDate(dateStr: string): boolean {
+  const date = new Date(dateStr);
+  return !isNaN(date.getTime());
 }
 
-// Define the Jigsaw API key from Supabase secrets
-const JIGSAW_API_KEY = Deno.env.get('JIGSAW') || ''
+// Function to ensure all required event fields are present
+function validateEvent(event: any): { valid: boolean; reason?: string } {
+  if (!event.name || typeof event.name !== 'string' || event.name.trim() === '') {
+    return { valid: false, reason: 'Missing or invalid name' };
+  }
 
-// Initialize the Jigsaw client
-const jigsaw = new JigsawStack(JIGSAW_API_KEY)
+  if (!event.date || !isValidDate(event.date)) {
+    return { valid: false, reason: 'Missing or invalid date' };
+  }
 
-// Event interface to match our database schema
-interface Event {
-  name: string
-  date: string
-  club?: string
-  ticket_link?: string
-  music_style?: string[]
-  lineup?: string[]
-  description?: string
-  source: string
-  price_range?: string
+  return { valid: true };
 }
 
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
+// Process the events from Jigsaw API
+async function processEvents(events: any[], source: string) {
+  console.log(`Processing ${events.length} events from ${source}`);
+  
+  let inserted = 0;
+  let skipped = 0;
+  let invalid = 0;
+
+  for (const event of events) {
+    try {
+      // Check if the event has valid data
+      const validation = validateEvent(event);
+      if (!validation.valid) {
+        console.log(`Invalid event: ${JSON.stringify(event)} - Reason: ${validation.reason}`);
+        invalid++;
+        continue;
+      }
+
+      // Check if we already have this event in the database
+      const { data: existingEvents } = await supabase
+        .from('events')
+        .select('id')
+        .eq('name', event.name)
+        .eq('date', new Date(event.date).toISOString())
+        .eq('source', source);
+
+      if (existingEvents && existingEvents.length > 0) {
+        console.log(`Event already exists: ${event.name} on ${event.date}`);
+        skipped++;
+        continue;
+      }
+
+      // Insert the event
+      const { error } = await supabase.from('events').insert({
+        name: event.name,
+        date: new Date(event.date).toISOString(),
+        club: event.club || null,
+        ticket_link: event.ticket_link || null,
+        price_range: event.price_range || null,
+        music_style: Array.isArray(event.music_style) ? event.music_style : null,
+        description: event.description || null,
+        lineup: Array.isArray(event.lineup) ? event.lineup : null,
+        source: source
+      });
+
+      if (error) {
+        console.error(`Error inserting event: ${error.message}`, event);
+        throw error;
+      }
+
+      inserted++;
+      console.log(`Inserted event: ${event.name}`);
+    } catch (error) {
+      console.error(`Error processing event: ${error.message}`);
+      throw error;
+    }
+  }
+
+  return { inserted, skipped, invalid };
+}
+
+// Scrape a website using Jigsaw
+async function scrapeWebsite(url: string, maxPages: number = 10) {
+  console.log(`Scraping ${url} with maxPages=${maxPages}`);
+
+  try {
+    const domain = new URL(url).hostname;
+    
+    // Call the Jigsaw API for scraping
+    const response = await fetch("https://api.jigsawstack.com/v1/scrape/website", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": JIGSAW_API_KEY
+      },
+      body: JSON.stringify({
+        url: url,
+        maxPages: maxPages,
+        maxNavigation: maxPages,
+        scrapeData: [
+          {
+            dataPath: "events",
+            selector: ".event-item, .event, article, .party-event, .event-card, .clubEvent",
+            extract: [
+              { key: "name", selector: ".event-title, .title, h2, h3, .event-name", attr: "text" },
+              { key: "date", selector: ".event-date, .date, time, .event-time", attr: "text" },
+              { key: "club", selector: ".event-venue, .venue, .location, .event-location", attr: "text" },
+              { key: "ticket_link", selector: ".ticket-link, .tickets a, .buy-tickets, a.btn", attr: "href" },
+              { key: "price_range", selector: ".event-price, .price, .ticket-price", attr: "text" },
+              { key: "description", selector: ".event-description, .description, .details, .event-details", attr: "text" }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to scrape ${url}: ${response.status} ${response.statusText}`, errorText);
+      return { success: false, error: `API error: ${response.status} ${response.statusText}` };
+    }
+
+    const result = await response.json();
+
+    if (result.data && result.data.events && Array.isArray(result.data.events)) {
+      const stats = await processEvents(result.data.events, domain);
+      return { success: true, source: domain, ...stats };
+    } else {
+      console.log(`No events found from ${url}`);
+      return { success: true, source: domain, inserted: 0, skipped: 0, invalid: 0 };
+    }
+  } catch (error) {
+    console.error(`Error scraping ${url}:`, error);
+    return { success: false, source: new URL(url).hostname, error: error.message || 'Unknown error' };
+  }
+}
+
+serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting Jigsaw scraper with maxPages=30')
-    
-    // Parse the request body
-    const { maxPages = 30 } = await req.json()
-    
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    const supabase = createClient(supabaseUrl, supabaseKey)
-    
-    // Define sources to scrape (only using the two supported sites)
-    const sources = [
-      {
-        name: 'ibiza-spotlight.com',
-        url: 'https://www.ibiza-spotlight.com/clubbing/calendar',
-      },
-      {
-        name: 'clubtickets.com',
-        url: 'https://www.clubtickets.com/es/ibiza',
-      }
-    ]
-    
-    // Track results for each source
-    const results = []
-    let totalInsertedCount = 0
-    
-    // Process each source
-    for (const source of sources) {
-      try {
-        console.log(`Calling Jigsaw AI Scrape API for ${source.name}...`)
-        console.log(`Scraping ${source.url} for Ibiza events...`)
-        
-        // Define the scraping prompt based on the source
-        const model = 'gpt-4o'
-        let prompt = `Extract all party and event information from this Ibiza events webpage. For each event, extract:
-          - Name of the event/party
-          - Date (in ISO format YYYY-MM-DD)
-          - Time (if available)
-          - Club/venue name
-          - Ticket link (if available)
-          - Price range (if available)
-          - Music style/genre (as an array of strings)
-          - Lineup (as an array of DJs/artists)
-          - Brief description (if available)
-          
-          Return the data as a clean JSON array of objects with these properties: name, date, club, ticket_link, price_range, music_style (array), lineup (array), description`
-        
-        // Customize prompt slightly for each source if needed
-        if (source.name === 'ibiza-spotlight.com') {
-          prompt += '\nNote: Pay special attention to the event calendar format on Ibiza Spotlight.'
-        } else if (source.name === 'clubtickets.com') {
-          prompt += '\nNote: This site sells tickets so make sure to capture the correct URLs and pricing information.'
-        }
-        
-        // Call Jigsaw AI to scrape the website
-        const data = await jigsaw.webScrape({
-          url: source.url,
-          prompt: prompt,
-          maxPages: maxPages,
-          model: model,
-          scrollToBottom: false,
-          navigationTimeout: 30000,
-          waitForSelector: source.name === 'ibiza-spotlight.com' ? '.event' : '.event-item'
-        })
-        
-        // Process the scraped data
-        let scrapedEvents = []
-        
-        if (data && typeof data === 'string') {
-          // Try to parse the response as JSON
-          try {
-            const parsed = JSON.parse(data)
-            if (Array.isArray(parsed)) {
-              scrapedEvents = parsed
-            } else if (parsed.data && Array.isArray(parsed.data)) {
-              scrapedEvents = parsed.data
-            }
-          } catch (parseError) {
-            console.error(`Error parsing JSON response from Jigsaw for ${source.name}:`, parseError)
-            
-            // Try to extract JSON from text response (sometimes Jigsaw wraps JSON in text)
-            const jsonMatch = data.match(/\[[\s\S]*?\]/)
-            if (jsonMatch) {
-              try {
-                scrapedEvents = JSON.parse(jsonMatch[0])
-              } catch (matchError) {
-                console.error(`Failed to extract JSON from text for ${source.name}:`, matchError)
-              }
-            }
-          }
-        }
-        
-        console.log(`Extracted ${scrapedEvents.length} events from ${source.name}`)
-        
-        // Transform and validate events
-        const validEvents: Event[] = []
-        const invalidEvents: any[] = []
-        
-        for (const event of scrapedEvents) {
-          try {
-            // Basic validation
-            if (!event.name || !event.date) {
-              invalidEvents.push({ ...event, reason: 'Missing required fields' })
-              continue
-            }
-            
-            // Parse and validate date
-            let eventDate: Date
-            
-            // Handle different date formats
-            if (typeof event.date === 'string') {
-              // If time is separate, try to combine
-              let dateString = event.date
-              if (event.time && typeof event.time === 'string') {
-                dateString = `${dateString} ${event.time}`
-              }
-              
-              // Try different date formats
-              try {
-                // First try direct ISO parsing
-                eventDate = new Date(dateString)
-                
-                // Check if valid
-                if (isNaN(eventDate.getTime())) {
-                  // Try some common European formats (DD/MM/YYYY)
-                  const dateParts = dateString.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/)
-                  if (dateParts) {
-                    eventDate = new Date(`${dateParts[3]}-${dateParts[2].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`)
-                  }
-                }
-                
-                // If still invalid, reject
-                if (isNaN(eventDate.getTime())) {
-                  throw new Error('Invalid date format')
-                }
-              } catch (dateError) {
-                invalidEvents.push({ ...event, reason: 'Invalid date format', error: dateError.message })
-                continue
-              }
-            } else {
-              invalidEvents.push({ ...event, reason: 'Date is not a string' })
-              continue
-            }
-            
-            // Format arrays properly
-            const music_style = Array.isArray(event.music_style) 
-              ? event.music_style 
-              : (typeof event.music_style === 'string' ? [event.music_style] : [])
-            
-            const lineup = Array.isArray(event.lineup) 
-              ? event.lineup 
-              : (typeof event.lineup === 'string' ? [event.lineup] : [])
-            
-            // Create a valid event object
-            const validEvent: Event = {
-              name: event.name,
-              date: eventDate.toISOString(),
-              club: event.club || event.venue || undefined,
-              ticket_link: event.ticket_link || undefined,
-              music_style: music_style,
-              lineup: lineup,
-              description: event.description || undefined,
-              price_range: event.price_range || undefined,
-              source: source.name
-            }
-            
-            validEvents.push(validEvent)
-          } catch (validationError) {
-            invalidEvents.push({ ...event, reason: 'Validation error', error: validationError.message })
-          }
-        }
-        
-        console.log(`${validEvents.length} valid events, ${invalidEvents.length} invalid events from ${source.name}`)
-        
-        // Insert valid events into the database
-        let insertedCount = 0
-        let skippedCount = 0
-        
-        // Insert events in batches to avoid timeouts
-        const BATCH_SIZE = 20
-        for (let i = 0; i < validEvents.length; i += BATCH_SIZE) {
-          const batch = validEvents.slice(i, i + BATCH_SIZE)
-          
-          // Insert events with upsert to avoid duplicates
-          const { data: insertedData, error: insertError } = await supabase
-            .from('events')
-            .upsert(
-              batch,
-              { 
-                onConflict: 'name,date,source',
-                ignoreDuplicates: true 
-              }
-            )
-          
-          if (insertError) {
-            console.error(`Error inserting events batch from ${source.name}:`, insertError)
-          } else {
-            // Count inserted vs skipped (duplicates)
-            insertedCount += batch.length - (insertError ? batch.length : 0)
-            skippedCount += insertError ? batch.length : 0
-          }
-        }
-        
-        totalInsertedCount += insertedCount
-        
-        // Record results for this source
-        results.push({
-          source: source.name,
-          success: true,
-          inserted: insertedCount,
-          skipped: skippedCount,
-          invalid: invalidEvents.length
-        })
-        
-        console.log(`Successfully added ${insertedCount} events from ${source.name}, skipped ${skippedCount} duplicates`)
-      } catch (sourceError) {
-        console.error(`Jigsaw API Error for ${source.name}:`, sourceError)
-        results.push({
-          source: source.name,
-          success: false,
-          error: sourceError.message || 'Unknown error'
-        })
-      }
+    // Parse request body
+    const body = await req.json();
+    const maxPages = body.maxPages || 10;
+    const sources = body.sources || [
+      'https://www.clubtickets.com/ibiza',
+      'https://www.ibiza-spotlight.com/nightclubs/calendar'
+    ];
+
+    console.log(`Starting scraper with maxPages=${maxPages}`);
+    console.log(`Scraping sources: ${JSON.stringify(sources)}`);
+
+    if (!JIGSAW_API_KEY) {
+      console.error("JIGSAW API key not found");
+      return new Response(
+        JSON.stringify({ error: "Missing API key" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-    
-    // Return the results
+
+    // Process each source
+    const results = [];
+    for (const source of sources) {
+      // Add https:// if needed
+      const url = source.startsWith('http') ? source : `https://www.${source}`;
+      const result = await scrapeWebsite(url, maxPages);
+      results.push(result);
+    }
+
+    // Calculate total count
+    const totalCount = results.reduce((total, result) => {
+      return total + (result.success ? (result.inserted || 0) : 0);
+    }, 0);
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        count: totalInsertedCount,
+      JSON.stringify({ 
+        count: totalCount,
         results: results
       }),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        },
-      }
-    )
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
-    console.error('Error in scrape-jigsaw function:', error)
-    
+    console.error("Error in scrape-jigsaw function:", error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Unknown error occurred'
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        },
-      }
-    )
+      JSON.stringify({ error: error.message || "Unknown error occurred" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-})
+});
