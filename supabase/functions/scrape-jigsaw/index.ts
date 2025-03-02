@@ -10,7 +10,7 @@ const corsHeaders = {
 // Create a Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const jigsawApiKey = Deno.env.get("JIGSAW") || ""; // Using the secret name "JIGSAW"
+const jigsawApiKey = Deno.env.get("JIGSAW") || "";
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -31,12 +31,19 @@ serve(async (req) => {
       );
     }
 
-    // URLs to scrape
-    const urlsToScrape = [
-      "https://www.club-tickets.de/de/tickets.htm",
+    // Extract request body to check for force flag and any custom URLs
+    const requestData = await req.json().catch(() => ({}));
+    const forceUpdate = requestData.force === true;
+    const customUrls = Array.isArray(requestData.urls) ? requestData.urls : null;
+    
+    // URLs to scrape - use custom URLs if provided, otherwise use default
+    const urlsToScrape = customUrls || [
+      "https://www.clubtickets.com/en/ibiza-clubs-tickets",
+      "https://www.ibiza-spotlight.com/events/club-nights",
+      "https://www.ibiza-spotlight.com/events/calendar"
     ];
 
-    console.log(`Preparing to scrape ${urlsToScrape.length} URLs`);
+    console.log(`Preparing to scrape ${urlsToScrape.length} URLs${forceUpdate ? ' (force update)' : ''}`);
     
     const scrapedEvents = [];
     
@@ -44,7 +51,7 @@ serve(async (req) => {
       console.log(`Scraping ${url}`);
       
       try {
-        // Make direct API request to Jigsaw with the x-api-key header
+        // Make API request to Jigsaw according to documentation
         const response = await fetch("https://api.jigsawstack.com/v1/web/ai_scrape", {
           method: "POST",
           headers: {
@@ -53,7 +60,11 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             url: url,
-            element_prompts: ["all upcoming events with date, name, club, link"]
+            element_prompts: [
+              "all upcoming events with date, name, club, price, link, lineup, and music style",
+              "extract ticket prices if available", 
+              "format dates as ISO strings"
+            ]
           })
         });
         
@@ -103,6 +114,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: `Scraped and processed ${scrapedEvents.length} events`,
+        count: scrapedEvents.length,
         events: scrapedEvents,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -171,7 +183,9 @@ function processScrapedEvents(data: any, source: string): any[] {
         lineup: item.lineup || null,
         description: item.description || null,
         price_range: item.price_range || item.price || null,
-        source: source,
+        source: source.includes("club-tickets") ? "clubtickets.com" : 
+                source.includes("ibiza-spotlight") ? "ibiza-spotlight.com" : 
+                "jigsawstack",
       };
 
       events.push(event);

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { CalendarView } from "@/components/events/CalendarView";
@@ -7,7 +6,7 @@ import { useEvents } from "@/hooks/use-events";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { addDays, format, startOfToday } from "date-fns";
-import { CalendarDays, PartyPopper, RefreshCw, Filter, AlertCircle } from "lucide-react";
+import { CalendarDays, PartyPopper, RefreshCw, Filter, AlertCircle, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,6 +15,7 @@ import { AddEventForm } from "@/components/events/AddEventForm";
 const PartyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [isScrapingEvents, setIsScrapingEvents] = useState(false);
+  const [isScrapingJigsaw, setIsScrapingJigsaw] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined);
   const { data: events = [], isLoading, getEventsForDay, refetch, isError, error } = useEvents(selectedDate, selectedSource);
   const dailyEvents = getEventsForDay(events, selectedDate);
@@ -88,7 +88,46 @@ const PartyCalendar = () => {
     }
   };
 
-  // Handler for when a new event is added manually
+  const scrapeWithJigsaw = async () => {
+    try {
+      setIsScrapingJigsaw(true);
+      setLastScrapingError(null);
+      
+      toast({
+        title: "Scraping events with Jigsaw AI",
+        description: "This may take a few moments...",
+      });
+      
+      const { data, error } = await supabase.functions.invoke('scrape-jigsaw', {
+        body: { force: true }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log("Jigsaw scraper response:", data);
+      
+      // Refetch events to display the new ones
+      await refetch();
+      
+      toast({
+        title: "Events added successfully",
+        description: data.message || `Found ${data.count || 0} events using Jigsaw AI`,
+      });
+    } catch (error) {
+      console.error("Error scraping events with Jigsaw:", error);
+      setLastScrapingError(error.message || "An unexpected error occurred");
+      toast({
+        title: "Error adding events",
+        description: error.message || "An unexpected error occurred with Jigsaw scraping",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScrapingJigsaw(false);
+    }
+  };
+
   const handleEventAdded = async () => {
     await refetch();
     toast({
@@ -131,6 +170,8 @@ const PartyCalendar = () => {
               <SelectContent>
                 <SelectItem value="all">All sources</SelectItem>
                 <SelectItem value="clubtickets.com">Club Tickets</SelectItem>
+                <SelectItem value="ibiza-spotlight.com">Ibiza Spotlight</SelectItem>
+                <SelectItem value="jigsawstack">Jigsaw AI</SelectItem>
                 <SelectItem value="manual">Manual entries</SelectItem>
               </SelectContent>
             </Select>
@@ -141,11 +182,20 @@ const PartyCalendar = () => {
             
             <Button 
               onClick={scrapeEvents}
-              disabled={isScrapingEvents}
+              disabled={isScrapingEvents || isScrapingJigsaw}
               className="bg-indigo-600 text-white hover:bg-indigo-700"
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${isScrapingEvents ? 'animate-spin' : ''}`} />
               {isScrapingEvents ? "Adding..." : "Add Club Tickets Events"}
+            </Button>
+            
+            <Button 
+              onClick={scrapeWithJigsaw}
+              disabled={isScrapingEvents || isScrapingJigsaw}
+              className="bg-purple-600 text-white hover:bg-purple-700"
+            >
+              <Globe className={`mr-2 h-4 w-4 ${isScrapingJigsaw ? 'animate-spin' : ''}`} />
+              {isScrapingJigsaw ? "Scraping..." : "Scrape with Jigsaw AI"}
             </Button>
             
             <Button 
@@ -188,7 +238,7 @@ const PartyCalendar = () => {
                   ))
                 ) : (
                   <li className="text-sm text-muted-foreground">
-                    No events found. Try adding events manually or use the "Add Club Tickets Events" button.
+                    No events found. Try adding events manually or use the scraping buttons above.
                   </li>
                 )}
               </ul>
