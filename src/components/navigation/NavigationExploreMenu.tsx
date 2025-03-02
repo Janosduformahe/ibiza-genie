@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import {
   NavigationMenuContent,
@@ -5,7 +6,7 @@ import {
   NavigationMenuLink,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Sun, ShoppingBag, BookOpen } from "lucide-react";
+import { Sun, ShoppingBag, BookOpen, CalendarDays } from "lucide-react";
 
 export const NavigationExploreMenu = () => (
   <NavigationMenuItem>
@@ -56,6 +57,22 @@ export const NavigationExploreMenu = () => (
               </div>
               <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                 Discover insider tips and stories about Ibiza
+              </p>
+            </Link>
+          </NavigationMenuLink>
+        </li>
+        <li>
+          <NavigationMenuLink asChild>
+            <Link
+              to="/calendar"
+              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-ibiza-sand/50 hover:text-ibiza-night focus:bg-ibiza-sand/50 focus:text-ibiza-night"
+            >
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                <div className="text-sm font-medium leading-none">Party Calendar</div>
+              </div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                Find the hottest parties and events in Ibiza
               </p>
             </Link>
           </NavigationMenuLink>
