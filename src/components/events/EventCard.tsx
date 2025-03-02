@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, MapPin, Music, Ticket, Users, Globe } from "lucide-react";
+import { CalendarClock, MapPin, Music, Ticket, Users, Globe, Euro } from "lucide-react";
 import { format } from "date-fns";
 
 export interface EventCardProps {
@@ -15,6 +15,7 @@ export interface EventCardProps {
   lineup?: string[];
   description?: string;
   source?: string;
+  price_range?: string;
 }
 
 export const EventCard = ({ 
@@ -25,14 +26,23 @@ export const EventCard = ({
   musicStyle, 
   lineup, 
   description,
-  source
+  source,
+  price_range
 }: EventCardProps) => {
   const eventDate = new Date(date);
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg h-full flex flex-col">
       <CardHeader className="bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] text-white">
-        <CardTitle className="line-clamp-2">{name}</CardTitle>
+        <div className="flex justify-between items-start">
+          <CardTitle className="line-clamp-2">{name}</CardTitle>
+          {price_range && (
+            <Badge className="ml-2 bg-white text-primary">
+              <Euro className="h-3 w-3 mr-1" />
+              {price_range}
+            </Badge>
+          )}
+        </div>
         <CardDescription className="text-white/90 flex items-center gap-1">
           <CalendarClock className="h-4 w-4" />
           {format(eventDate, "EEEE, MMMM do 'at' h:mm a")}

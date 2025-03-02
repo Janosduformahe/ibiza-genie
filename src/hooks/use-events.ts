@@ -79,6 +79,8 @@ export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
     ...useQuery({
       queryKey: ["events", format(selectedDate, "yyyy-MM"), source],
       queryFn: fetchEvents,
+      retry: 1,
+      refetchOnWindowFocus: false
     }),
     getEventsForDay,
     getEventsForWeek,

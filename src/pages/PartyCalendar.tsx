@@ -7,16 +7,19 @@ import { useEvents } from "@/hooks/use-events";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { addDays, format, startOfToday } from "date-fns";
-import { CalendarDays, PartyPopper, RefreshCw, Filter } from "lucide-react";
+import { CalendarDays, PartyPopper, RefreshCw, Filter, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AddEventForm } from "@/components/events/AddEventForm";
 
 const PartyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [isScrapingEvents, setIsScrapingEvents] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined);
-  const { data: events = [], isLoading, getEventsForDay, refetch } = useEvents(selectedDate, selectedSource);
+  const { data: events = [], isLoading, getEventsForDay, refetch, isError, error } = useEvents(selectedDate, selectedSource);
   const dailyEvents = getEventsForDay(events, selectedDate);
+  const [lastScrapingError, setLastScrapingError] = useState<string | null>(null);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -39,7 +42,7 @@ const PartyCalendar = () => {
     } else {
       toast({
         title: "No upcoming parties found",
-        description: "Try selecting a different month to find more events",
+        description: "Try selecting a different month to find more events or adding an event manually",
         variant: "destructive",
       });
     }
@@ -48,10 +51,11 @@ const PartyCalendar = () => {
   const scrapeEvents = async () => {
     try {
       setIsScrapingEvents(true);
+      setLastScrapingError(null);
       
       toast({
-        title: "Scraping events from Club Tickets",
-        description: "This may take a few minutes...",
+        title: "Adding Club Tickets events",
+        description: "This may take a few moments...",
       });
       
       const { data, error } = await supabase.functions.invoke('scrape-club-tickets', {
@@ -68,19 +72,29 @@ const PartyCalendar = () => {
       await refetch();
       
       toast({
-        title: "Events scraping complete",
+        title: "Events added successfully",
         description: data.message || `Found ${data.count || 0} events from Club Tickets`,
       });
     } catch (error) {
       console.error("Error scraping events:", error);
+      setLastScrapingError(error.message || "An unexpected error occurred");
       toast({
-        title: "Error scraping events",
+        title: "Error adding events",
         description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
       setIsScrapingEvents(false);
     }
+  };
+
+  // Handler for when a new event is added manually
+  const handleEventAdded = async () => {
+    await refetch();
+    toast({
+      title: "Events updated",
+      description: "Calendar has been refreshed with the latest events",
+    });
   };
 
   return (
@@ -95,6 +109,16 @@ const PartyCalendar = () => {
           </h1>
           <p className="opacity-90">Find the hottest parties and events happening on the island</p>
         </div>
+        
+        {lastScrapingError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error scraping events</AlertTitle>
+            <AlertDescription>
+              {lastScrapingError}
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
@@ -113,13 +137,15 @@ const PartyCalendar = () => {
           </div>
           
           <div className="flex flex-wrap gap-2">
+            <AddEventForm onEventAdded={handleEventAdded} />
+            
             <Button 
               onClick={scrapeEvents}
               disabled={isScrapingEvents}
               className="bg-indigo-600 text-white hover:bg-indigo-700"
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${isScrapingEvents ? 'animate-spin' : ''}`} />
-              {isScrapingEvents ? "Scraping..." : "Scrape New Events"}
+              {isScrapingEvents ? "Adding..." : "Add Club Tickets Events"}
             </Button>
             
             <Button 
@@ -162,7 +188,7 @@ const PartyCalendar = () => {
                   ))
                 ) : (
                   <li className="text-sm text-muted-foreground">
-                    No events found. Try scraping for new events.
+                    No events found. Try adding events manually or use the "Add Club Tickets Events" button.
                   </li>
                 )}
               </ul>
