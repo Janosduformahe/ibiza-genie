@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,13 +22,21 @@ export const ChatInput = ({ onSend, disabled, placeholder }: ChatInputProps) => 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t border-white/20 bg-black/20 backdrop-blur-sm sticky bottom-0 rounded-b-xl">
+    <form 
+      onSubmit={handleSubmit} 
+      className="p-4 border-t border-white/20 bg-black/20 backdrop-blur-sm sticky bottom-0 rounded-b-xl z-10"
+      style={{ 
+        position: "sticky", 
+        bottom: 0,
+        paddingBottom: "env(safe-area-inset-bottom, 1rem)" 
+      }}
+    >
       <div className="flex space-x-2">
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={placeholder || "Type your message..."}
-          className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+          className="flex-1 bg-white/20 border-white/20 text-white placeholder:text-white/60 focus:border-white"
           disabled={disabled}
         />
         <Button 

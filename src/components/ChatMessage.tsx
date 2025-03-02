@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -11,11 +12,11 @@ export const ChatMessage = ({ content, isUser }: ChatMessageProps) => {
       className={cn(
         "message p-4 rounded-lg my-2 max-w-[80%]",
         isUser 
-          ? "user-message ml-auto bg-ibiza-azure text-white" 
-          : "bot-message mr-auto glass-card"
+          ? "user-message ml-auto bg-ibiza-azure text-white font-medium" 
+          : "bot-message mr-auto glass-card text-white font-medium"
       )}
     >
-      <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+      <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{content}</p>
     </div>
   );
 };
