@@ -43,6 +43,7 @@ export const DailyEvents = ({ date, events, isLoading }: DailyEventsProps) => {
                 musicStyle={event.music_style}
                 lineup={event.lineup}
                 description={event.description}
+                source={event.source}
               />
             ))}
           </div>

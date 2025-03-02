@@ -16,7 +16,7 @@ export interface Event {
   source?: string;
 }
 
-export const useEvents = (selectedDate: Date = new Date()) => {
+export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
   const fetchEvents = async (): Promise<Event[]> => {
     const startOfSelectedMonth = startOfMonth(selectedDate);
     const endOfSelectedMonth = endOfMonth(selectedDate);
@@ -24,12 +24,18 @@ export const useEvents = (selectedDate: Date = new Date()) => {
     const formattedStart = format(startOfSelectedMonth, "yyyy-MM-dd");
     const formattedEnd = format(endOfSelectedMonth, "yyyy-MM-dd");
     
-    const { data, error } = await supabase
+    let query = supabase
       .from("events")
       .select("*")
       .gte("date", formattedStart)
-      .lte("date", formattedEnd)
-      .order("date", { ascending: true });
+      .lte("date", formattedEnd);
+    
+    // Add source filter if provided
+    if (source) {
+      query = query.eq("source", source);
+    }
+    
+    const { data, error } = await query.order("date", { ascending: true });
     
     if (error) {
       console.error("Error fetching events:", error);
@@ -57,12 +63,17 @@ export const useEvents = (selectedDate: Date = new Date()) => {
     });
   };
 
+  const getEventsBySource = (events: Event[], source: string): Event[] => {
+    return events.filter((event) => event.source === source);
+  };
+
   return {
     ...useQuery({
-      queryKey: ["events", format(selectedDate, "yyyy-MM")],
+      queryKey: ["events", format(selectedDate, "yyyy-MM"), source],
       queryFn: fetchEvents,
     }),
     getEventsForDay,
     getEventsForWeek,
+    getEventsBySource,
   };
 };

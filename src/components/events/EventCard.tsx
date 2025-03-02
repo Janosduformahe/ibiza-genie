@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, MapPin, Music, Ticket, Users } from "lucide-react";
+import { CalendarClock, MapPin, Music, Ticket, Users, Globe } from "lucide-react";
 import { format } from "date-fns";
 
 export interface EventCardProps {
@@ -14,6 +14,7 @@ export interface EventCardProps {
   musicStyle?: string[];
   lineup?: string[];
   description?: string;
+  source?: string;
 }
 
 export const EventCard = ({ 
@@ -23,7 +24,8 @@ export const EventCard = ({
   ticketLink, 
   musicStyle, 
   lineup, 
-  description 
+  description,
+  source
 }: EventCardProps) => {
   const eventDate = new Date(date);
   
@@ -41,6 +43,13 @@ export const EventCard = ({
           <div className="flex items-center gap-2 mb-2 text-sm">
             <MapPin className="h-4 w-4 text-muted-foreground" />
             <span>{club}</span>
+          </div>
+        )}
+        
+        {source && (
+          <div className="flex items-center gap-2 mb-2 text-sm">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <span>Source: {source}</span>
           </div>
         )}
         

@@ -7,17 +7,23 @@ import { useEvents } from "@/hooks/use-events";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { addDays, format, startOfToday } from "date-fns";
-import { CalendarDays, PartyPopper, RefreshCw } from "lucide-react";
+import { CalendarDays, PartyPopper, RefreshCw, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PartyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [isScrapingEvents, setIsScrapingEvents] = useState(false);
-  const { data: events = [], isLoading, getEventsForDay, refetch } = useEvents(selectedDate);
+  const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined);
+  const { data: events = [], isLoading, getEventsForDay, refetch } = useEvents(selectedDate, selectedSource);
   const dailyEvents = getEventsForDay(events, selectedDate);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
+  };
+
+  const handleSourceChange = (value: string) => {
+    setSelectedSource(value === "all" ? undefined : value);
   };
 
   const jumpToNextParty = () => {
@@ -44,7 +50,7 @@ const PartyCalendar = () => {
       setIsScrapingEvents(true);
       
       toast({
-        title: "Scraping events",
+        title: "Scraping events from Club Tickets",
         description: "This may take a few minutes...",
       });
       
@@ -61,7 +67,7 @@ const PartyCalendar = () => {
       
       toast({
         title: "Events scraped successfully!",
-        description: `Found ${data.count} events from Club Tickets`,
+        description: `Found ${data.count} new events from Club Tickets`,
       });
     } catch (error) {
       console.error("Error scraping events:", error);
@@ -88,23 +94,40 @@ const PartyCalendar = () => {
           <p className="opacity-90">Find the hottest parties and events happening on the island</p>
         </div>
         
-        <div className="flex flex-wrap justify-end gap-2 mb-4">
-          <Button 
-            onClick={scrapeEvents}
-            disabled={isScrapingEvents}
-            className="bg-indigo-600 text-white hover:bg-indigo-700"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isScrapingEvents ? 'animate-spin' : ''}`} />
-            {isScrapingEvents ? "Scraping..." : "Scrape New Events"}
-          </Button>
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-white" />
+            <span className="text-white">Filter by source:</span>
+            <Select onValueChange={handleSourceChange} defaultValue="all">
+              <SelectTrigger className="w-[180px] bg-white/90">
+                <SelectValue placeholder="All sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All sources</SelectItem>
+                <SelectItem value="clubtickets.com">Club Tickets</SelectItem>
+                <SelectItem value="manual">Manual entries</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Button 
-            onClick={jumpToNextParty}
-            className="bg-white text-primary hover:bg-white/90"
-          >
-            <PartyPopper className="mr-2 h-4 w-4" />
-            Jump to Next Party
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={scrapeEvents}
+              disabled={isScrapingEvents}
+              className="bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isScrapingEvents ? 'animate-spin' : ''}`} />
+              {isScrapingEvents ? "Scraping..." : "Scrape New Events"}
+            </Button>
+            
+            <Button 
+              onClick={jumpToNextParty}
+              className="bg-white text-primary hover:bg-white/90"
+            >
+              <PartyPopper className="mr-2 h-4 w-4" />
+              Jump to Next Party
+            </Button>
+          </div>
         </div>
         
         <div className="grid md:grid-cols-[300px_1fr] gap-6">
@@ -128,8 +151,9 @@ const PartyCalendar = () => {
                     onClick={() => handleDateSelect(new Date(event.date))}
                   >
                     <div className="font-medium truncate">{event.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(event.date), "MMM d 'at' h:mm a")}
+                    <div className="text-xs text-muted-foreground flex justify-between">
+                      <span>{format(new Date(event.date), "MMM d 'at' h:mm a")}</span>
+                      {event.source && <span className="text-primary opacity-70">{event.source}</span>}
                     </div>
                   </li>
                 ))}

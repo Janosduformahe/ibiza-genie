@@ -68,6 +68,7 @@ export type Database = {
           music_style: string[] | null
           name: string
           price_range: string | null
+          source: string | null
           ticket_link: string | null
         }
         Insert: {
@@ -80,6 +81,7 @@ export type Database = {
           music_style?: string[] | null
           name: string
           price_range?: string | null
+          source?: string | null
           ticket_link?: string | null
         }
         Update: {
@@ -92,6 +94,7 @@ export type Database = {
           music_style?: string[] | null
           name?: string
           price_range?: string | null
+          source?: string | null
           ticket_link?: string | null
         }
         Relationships: []
