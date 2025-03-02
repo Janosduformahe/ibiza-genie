@@ -7,13 +7,15 @@ import { useEvents } from "@/hooks/use-events";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { addDays, format, startOfToday } from "date-fns";
-import { CalendarDays, PartyPopper, Filter, Globe, Clock } from "lucide-react";
+import { CalendarDays, PartyPopper, Filter, Globe, Clock, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const PartyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined);
+  const [isScraperRunning, setIsScraperRunning] = useState(false);
   const { data: events = [], isLoading, getEventsForDay, refetch, isError, error } = useEvents(selectedDate, selectedSource);
   const dailyEvents = getEventsForDay(events, selectedDate);
 
@@ -41,6 +43,49 @@ const PartyCalendar = () => {
         description: "Try selecting a different month to find more events",
         variant: "destructive",
       });
+    }
+  };
+
+  const runScraperNow = async () => {
+    if (isScraperRunning) return;
+    
+    setIsScraperRunning(true);
+    toast({
+      title: "Scraper started",
+      description: "Fetching events for the whole year. This may take a few minutes.",
+    });
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-jigsaw', {
+        body: { maxPages: 30 }  // Increase max pages to get more events for the whole year
+      });
+      
+      if (error) {
+        console.error("Error running scraper:", error);
+        toast({
+          title: "Scraper error",
+          description: "Failed to run the event scraper. Please try again later.",
+          variant: "destructive",
+        });
+      } else {
+        console.log("Scraper response:", data);
+        toast({
+          title: "Events scraping completed!",
+          description: `Successfully scraped ${data?.count || 0} new events.`,
+        });
+        
+        // Refresh the events data
+        refetch();
+      }
+    } catch (err) {
+      console.error("Error invoking scraper function:", err);
+      toast({
+        title: "Scraper error",
+        description: "Failed to run the event scraper. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScraperRunning(false);
     }
   };
 
@@ -74,13 +119,24 @@ const PartyCalendar = () => {
             </Select>
           </div>
           
-          <Button 
-            onClick={jumpToNextParty}
-            className="bg-white text-primary hover:bg-white/90"
-          >
-            <PartyPopper className="mr-2 h-4 w-4" />
-            Find Next Party
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={runScraperNow}
+              className="bg-white text-primary hover:bg-white/90"
+              disabled={isScraperRunning}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isScraperRunning ? 'animate-spin' : ''}`} />
+              {isScraperRunning ? "Scraping Events..." : "Run Scraper Now"}
+            </Button>
+            
+            <Button 
+              onClick={jumpToNextParty}
+              className="bg-white text-primary hover:bg-white/90"
+            >
+              <PartyPopper className="mr-2 h-4 w-4" />
+              Find Next Party
+            </Button>
+          </div>
         </div>
         
         <div className="grid md:grid-cols-[300px_1fr] gap-6">
