@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
 export interface Event {
@@ -22,8 +22,12 @@ export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
     const startOfSelectedMonth = startOfMonth(selectedDate);
     const endOfSelectedMonth = endOfMonth(selectedDate);
     
-    const formattedStart = format(startOfSelectedMonth, "yyyy-MM-dd");
-    const formattedEnd = format(endOfSelectedMonth, "yyyy-MM-dd");
+    // Extend the range a bit to ensure we have events at month boundaries
+    const extendedStart = addDays(startOfSelectedMonth, -7);
+    const extendedEnd = addDays(endOfSelectedMonth, 7);
+    
+    const formattedStart = format(extendedStart, "yyyy-MM-dd");
+    const formattedEnd = format(extendedEnd, "yyyy-MM-dd");
     
     console.log(`Fetching events for month from ${formattedStart} to ${formattedEnd}`);
     console.log(`Source filter: ${source || 'none (all sources)'}`);
@@ -52,9 +56,16 @@ export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
         throw new Error(error.message);
       }
       
-      console.log(`Found ${data?.length || 0} events in the selected month`);
+      console.log(`Found ${data?.length || 0} events in the selected period`);
       if (data && data.length > 0) {
         console.log("Sample event:", data[0]);
+      } else {
+        // If no events found, suggest to update the calendar
+        toast({
+          title: "No events found",
+          description: "Try clicking 'Update Calendar Now' to get the latest events",
+          duration: 5000
+        });
       }
       
       return data || [];
@@ -90,16 +101,26 @@ export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
   const getEventsBySource = (events: Event[], source: string): Event[] => {
     return events.filter((event) => event.source === source);
   };
+  
+  const getUpcomingEvents = (events: Event[], count: number = 5): Event[] => {
+    const now = new Date();
+    return events
+      .filter(event => new Date(event.date) >= now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, count);
+  };
 
   return {
     ...useQuery({
       queryKey: ["events", format(selectedDate, "yyyy-MM"), source],
       queryFn: fetchEvents,
       retry: 1,
-      refetchOnWindowFocus: false
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000 // 5 minutes
     }),
     getEventsForDay,
     getEventsForWeek,
     getEventsBySource,
+    getUpcomingEvents
   };
 };

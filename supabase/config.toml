@@ -2,3 +2,5 @@
 project_id = "test"
 [functions.scrape-jigsaw]
 verify_jwt = false
+[functions.schedule-events-update]
+verify_jwt = false
