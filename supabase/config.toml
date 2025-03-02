@@ -4,4 +4,3 @@ project_id = "test"
 [functions.scrape-club-tickets]
 [functions.scrape-jigsaw]
 verify_jwt = false
-
