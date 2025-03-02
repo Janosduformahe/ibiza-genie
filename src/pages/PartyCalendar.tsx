@@ -7,11 +7,13 @@ import { useEvents } from "@/hooks/use-events";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { addDays, format, startOfToday } from "date-fns";
-import { CalendarDays, PartyPopper } from "lucide-react";
+import { CalendarDays, PartyPopper, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const PartyCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
-  const { data: events = [], isLoading, getEventsForDay } = useEvents(selectedDate);
+  const [isScrapingEvents, setIsScrapingEvents] = useState(false);
+  const { data: events = [], isLoading, getEventsForDay, refetch } = useEvents(selectedDate);
   const dailyEvents = getEventsForDay(events, selectedDate);
 
   const handleDateSelect = (date: Date) => {
@@ -37,6 +39,42 @@ const PartyCalendar = () => {
     }
   };
 
+  const scrapeEvents = async () => {
+    try {
+      setIsScrapingEvents(true);
+      
+      toast({
+        title: "Scraping events",
+        description: "This may take a few minutes...",
+      });
+      
+      const { data, error } = await supabase.functions.invoke('scrape-club-tickets', {
+        body: { force: false }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refetch events to display the new ones
+      await refetch();
+      
+      toast({
+        title: "Events scraped successfully!",
+        description: `Found ${data.count} events from Club Tickets`,
+      });
+    } catch (error) {
+      console.error("Error scraping events:", error);
+      toast({
+        title: "Error scraping events",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScrapingEvents(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#8B5CF6] via-[#D946EF] to-[#0EA5E9]">
       <Navigation />
@@ -50,7 +88,16 @@ const PartyCalendar = () => {
           <p className="opacity-90">Find the hottest parties and events happening on the island</p>
         </div>
         
-        <div className="flex justify-end mb-4">
+        <div className="flex flex-wrap justify-end gap-2 mb-4">
+          <Button 
+            onClick={scrapeEvents}
+            disabled={isScrapingEvents}
+            className="bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isScrapingEvents ? 'animate-spin' : ''}`} />
+            {isScrapingEvents ? "Scraping..." : "Scrape New Events"}
+          </Button>
+          
           <Button 
             onClick={jumpToNextParty}
             className="bg-white text-primary hover:bg-white/90"

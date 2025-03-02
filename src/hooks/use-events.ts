@@ -13,6 +13,7 @@ export interface Event {
   lineup?: string[];
   price_range?: string;
   description?: string;
+  source?: string;
 }
 
 export const useEvents = (selectedDate: Date = new Date()) => {

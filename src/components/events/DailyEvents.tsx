@@ -41,13 +41,15 @@ export const DailyEvents = ({ date, events, isLoading }: DailyEventsProps) => {
                 club={event.club}
                 ticketLink={event.ticket_link}
                 musicStyle={event.music_style}
+                lineup={event.lineup}
+                description={event.description}
               />
             ))}
           </div>
         ) : (
           <div className="py-8 text-center">
             <p className="text-muted-foreground">No events found for this date</p>
-            <p className="text-sm text-muted-foreground mt-1">Check back later or select another date</p>
+            <p className="text-sm text-muted-foreground mt-1">Try selecting another date or use the "Scrape New Events" button</p>
           </div>
         )}
       </CardContent>
