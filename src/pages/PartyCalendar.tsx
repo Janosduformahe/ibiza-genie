@@ -55,19 +55,21 @@ const PartyCalendar = () => {
       });
       
       const { data, error } = await supabase.functions.invoke('scrape-club-tickets', {
-        body: { force: false }
+        body: { force: true }
       });
       
       if (error) {
         throw error;
       }
       
+      console.log("Scraper response:", data);
+      
       // Refetch events to display the new ones
       await refetch();
       
       toast({
-        title: "Events scraped successfully!",
-        description: `Found ${data.count} new events from Club Tickets`,
+        title: "Events scraping complete",
+        description: data.message || `Found ${data.count || 0} events from Club Tickets`,
       });
     } catch (error) {
       console.error("Error scraping events:", error);
@@ -144,19 +146,25 @@ const PartyCalendar = () => {
                   Array(3).fill(0).map((_, i) => (
                     <li key={i} className="h-8 bg-muted rounded animate-pulse" />
                   ))
-                ) : events.slice(0, 5).map((event) => (
-                  <li 
-                    key={event.id} 
-                    className="p-2 text-sm rounded hover:bg-muted cursor-pointer transition-colors"
-                    onClick={() => handleDateSelect(new Date(event.date))}
-                  >
-                    <div className="font-medium truncate">{event.name}</div>
-                    <div className="text-xs text-muted-foreground flex justify-between">
-                      <span>{format(new Date(event.date), "MMM d 'at' h:mm a")}</span>
-                      {event.source && <span className="text-primary opacity-70">{event.source}</span>}
-                    </div>
+                ) : events.length > 0 ? (
+                  events.slice(0, 5).map((event) => (
+                    <li 
+                      key={event.id} 
+                      className="p-2 text-sm rounded hover:bg-muted cursor-pointer transition-colors"
+                      onClick={() => handleDateSelect(new Date(event.date))}
+                    >
+                      <div className="font-medium truncate">{event.name}</div>
+                      <div className="text-xs text-muted-foreground flex justify-between">
+                        <span>{format(new Date(event.date), "MMM d 'at' h:mm a")}</span>
+                        {event.source && <span className="text-primary opacity-70">{event.source}</span>}
+                      </div>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-sm text-muted-foreground">
+                    No events found. Try scraping for new events.
                   </li>
-                ))}
+                )}
               </ul>
             </div>
           </div>

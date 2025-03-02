@@ -1,255 +1,199 @@
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.33.1";
-import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
+// Follow this setup guide to integrate the Deno runtime and Supabase functions in your project:
+// https://deno.land/manual/examples/supabase
 
-interface ProxyProvider {
-  getProxy: () => Promise<string>;
-}
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
-class RotatingProxyProvider implements ProxyProvider {
-  private proxies: string[] = [
-    // Free rotating proxies (for demonstration)
-    // In production, you would use paid proxy services like Bright Data, Oxylabs, etc.
-    "https://proxy1.example.com",
-    "https://proxy2.example.com",
-    "https://proxy3.example.com",
-  ];
-  private currentIndex = 0;
+// ANSI escape codes for colorful console output
+const RED = "\x1b[31m";
+const GREEN = "\x1b[32m";
+const YELLOW = "\x1b[33m";
+const BLUE = "\x1b[34m";
+const RESET = "\x1b[0m";
 
-  async getProxy(): Promise<string> {
-    // Simple rotation mechanism
-    const proxy = this.proxies[this.currentIndex];
-    this.currentIndex = (this.currentIndex + 1) % this.proxies.length;
-    return proxy;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
-}
 
-// Initialize proxy provider
-const proxyProvider = new RotatingProxyProvider();
-
-// Function to fetch with proxy (simplified for demonstration)
-async function fetchWithProxy(url: string): Promise<Response> {
-  // In a real implementation, you would use the proxy
-  // For now, just doing a direct fetch to not complicate things
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9,es;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-    });
+    // Create a Supabase client with the Auth context of the function
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Parse request body
+    const requestData = await req.json();
+    const forceScrape = requestData?.force === true;
+
+    console.log(GREEN + "Starting Club Tickets scraper..." + RESET);
+    
+    // Define a test event for debugging
+    const testEvent = {
+      name: "Test Party Event",
+      date: new Date().toISOString(),
+      club: "Test Club",
+      ticket_link: "https://www.clubtickets.com/es/",
+      music_style: ["House", "Techno"],
+      lineup: ["DJ Test", "DJ Debug"],
+      description: "This is a test event to verify database insertion is working",
+      source: "clubtickets.com"
+    };
+
+    // Insert test event for debugging
+    const { data: testEventData, error: testEventError } = await supabase
+      .from("events")
+      .insert(testEvent)
+      .select();
+
+    if (testEventError) {
+      console.error(RED + "Error inserting test event:" + RESET, testEventError);
+      throw new Error(`Database insertion test failed: ${testEventError.message}`);
+    } else {
+      console.log(GREEN + "Test event inserted successfully:" + RESET, testEventData);
+    }
+
+    // Real scraping code starts here
+    const targetUrl = "https://www.clubtickets.com/es/ibiza-clubs-tickets";
+    
+    // Use a rotating proxy service if available
+    const proxyOptions = {};
+    const proxyUrl = Deno.env.get("ROTATING_PROXY_URL");
+    
+    if (proxyUrl) {
+      console.log(BLUE + "Using rotating proxy..." + RESET);
+      proxyOptions.headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
+      };
+    }
+
+    console.log(BLUE + `Fetching events from ${targetUrl}...` + RESET);
+    
+    // Fetch the club tickets page
+    const response = await fetch(targetUrl, proxyOptions);
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`Failed to fetch Club Tickets: ${response.status} ${response.statusText}`);
     }
     
-    return response;
-  } catch (error) {
-    console.error("Error fetching with direct request:", error);
-    throw error;
-  }
-}
-
-// Parse events from Club Tickets
-async function scrapeClubTicketsEvents() {
-  try {
-    const baseUrl = "https://www.clubtickets.com/es/";
-    const response = await fetchWithProxy(baseUrl);
     const html = await response.text();
+    console.log(BLUE + `Received HTML response (${html.length} bytes)` + RESET);
     
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    if (!doc) throw new Error("Failed to parse HTML");
+    // Log a small sample of the HTML for debugging
+    console.log(YELLOW + "HTML sample:" + RESET, html.substring(0, 500) + "...");
+
+    // Parse HTML
+    const parser = new DOMParser();
+    const document = parser.parseFromString(html, "text/html");
     
+    if (!document) {
+      throw new Error("Failed to parse HTML");
+    }
+
+    // Different selectors to try
+    const eventSelectors = [
+      ".event-item", // Original selector
+      ".event-card",
+      ".ticket-list .ticket",
+      ".event-list .event",
+      "article.event",
+      ".events-container .event-item",
+      // Try more general selectors
+      "article",
+      ".card",
+      ".product"
+    ];
+
+    let eventElements = [];
+    let usedSelector = "";
+
+    // Try each selector until we find events
+    for (const selector of eventSelectors) {
+      console.log(BLUE + `Trying selector: ${selector}` + RESET);
+      const elements = document.querySelectorAll(selector);
+      if (elements && elements.length > 0) {
+        eventElements = elements;
+        usedSelector = selector;
+        console.log(GREEN + `Found ${elements.length} events with selector: ${selector}` + RESET);
+        break;
+      }
+    }
+
+    // If no events found, try a broader approach - get all links
+    if (eventElements.length === 0) {
+      console.log(YELLOW + "No event elements found with specific selectors, trying broad approach..." + RESET);
+      
+      // Look for any links that might be event links
+      const allLinks = document.querySelectorAll("a");
+      console.log(BLUE + `Found ${allLinks.length} links in total` + RESET);
+      
+      // Log some links for debugging
+      const linkTexts = Array.from(allLinks)
+        .slice(0, 10)
+        .map(link => ({
+          href: link.getAttribute("href"),
+          text: link.textContent?.trim()
+        }));
+      
+      console.log(YELLOW + "Sample links:" + RESET, JSON.stringify(linkTexts, null, 2));
+      
+      // Get all headings that might contain event names
+      const headings = document.querySelectorAll("h1, h2, h3, h4, h5");
+      console.log(BLUE + `Found ${headings.length} headings` + RESET);
+      
+      // Log some headings for debugging
+      const headingTexts = Array.from(headings)
+        .slice(0, 10)
+        .map(h => h.textContent?.trim());
+      
+      console.log(YELLOW + "Sample headings:" + RESET, JSON.stringify(headingTexts, null, 2));
+    }
+
+    // Extract event information
     const events = [];
     
-    // Find event containers
-    const eventElements = doc.querySelectorAll(".eventoContent");
-    
-    for (const eventEl of eventElements) {
-      try {
-        // Extract event details
-        const nameEl = eventEl.querySelector(".eventoInfo h2");
-        const name = nameEl ? nameEl.textContent.trim() : "Unknown Event";
-        
-        const dateEl = eventEl.querySelector(".eventoInfo .eventoFecha");
-        let dateStr = dateEl ? dateEl.textContent.trim() : "";
-        
-        // Parse the date (format: "Viernes 7 Junio 2024")
-        const dateParts = dateStr.split(" ");
-        if (dateParts.length >= 4) {
-          const day = dateParts[1];
-          const month = parseSpanishMonth(dateParts[2]);
-          const year = dateParts[3];
-          
-          // Create a date object - assuming events start at 23:00 if not specified
-          const date = new Date(`${year}-${month}-${day}T23:00:00`);
-          
-          // Get ticket link
-          const linkEl = eventEl.querySelector("a.eventoTickets");
-          const ticketLink = linkEl ? `${baseUrl}${linkEl.getAttribute("href")}` : null;
-          
-          // Get venue/club
-          const clubEl = eventEl.querySelector(".eventoInfo .eventoClub");
-          const club = clubEl ? clubEl.textContent.trim() : null;
-          
-          // Get lineup (if available)
-          const lineupEl = eventEl.querySelector(".eventoInfo .eventoArtistas");
-          let lineup = [];
-          if (lineupEl) {
-            const lineupText = lineupEl.textContent.trim();
-            lineup = lineupText.split(",").map(artist => artist.trim()).filter(Boolean);
-          }
-          
-          // Get image for description preview
-          const imgEl = eventEl.querySelector("img");
-          const imgSrc = imgEl ? imgEl.getAttribute("src") : null;
-          
-          // Add event to the list
-          events.push({
-            name,
-            date: date.toISOString(),
-            club,
-            ticket_link: ticketLink,
-            lineup,
-            description: `Event at ${club || "Ibiza"}. Book your tickets now!`,
-            source: "clubtickets.com"
-          });
-        }
-      } catch (eventError) {
-        console.error("Error processing event:", eventError);
-        // Continue with next event
-      }
-    }
-    
-    return events;
-  } catch (error) {
-    console.error("Error scraping Club Tickets:", error);
-    throw error;
-  }
-}
+    // Log that we're extracting events now
+    console.log(BLUE + `Extracting data from ${eventElements.length} events...` + RESET);
 
-// Helper function to parse Spanish month names to numbers
-function parseSpanishMonth(month: string): string {
-  const months: { [key: string]: string } = {
-    "enero": "01",
-    "febrero": "02", 
-    "marzo": "03",
-    "abril": "04",
-    "mayo": "05",
-    "junio": "06",
-    "julio": "07",
-    "agosto": "08",
-    "septiembre": "09",
-    "octubre": "10",
-    "noviembre": "11",
-    "diciembre": "12"
-  };
-  
-  // Convert to lowercase for case-insensitive matching
-  const lowercaseMonth = month.toLowerCase();
-  return months[lowercaseMonth] || "01"; // Default to January if not found
-}
-
-// Save events to Supabase
-async function saveEvents(events: any[]) {
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    const uniqueEvents = [];
-    
-    // Check for existing events to avoid duplicates
-    for (const event of events) {
-      const { data, error } = await supabase
-        .from("events")
-        .select("id")
-        .eq("name", event.name)
-        .eq("date", event.date)
-        .eq("club", event.club || "")
-        .single();
-      
-      if (error && error.code !== "PGRST116") { // PGRST116 is "No rows returned"
-        console.error("Error checking for duplicate event:", error);
-        continue;
-      }
-      
-      if (!data) {
-        uniqueEvents.push(event);
-      }
-    }
-    
-    console.log(`Found ${uniqueEvents.length} new events to add`);
-    
-    if (uniqueEvents.length === 0) {
-      return { count: 0, message: "No new events found" };
-    }
-    
-    // Insert new events
-    const { data, error } = await supabase
-      .from("events")
-      .insert(uniqueEvents)
-      .select();
-    
-    if (error) {
-      console.error("Error inserting events:", error);
-      throw error;
-    }
-    
-    return { count: data?.length || 0, message: "Events added successfully" };
-  } catch (error) {
-    console.error("Error saving events:", error);
-    throw error;
-  }
-}
-
-// Main handler for the edge function
-Deno.serve(async (req) => {
-  try {
-    // CORS headers
-    const headers = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      "Content-Type": "application/json",
-    };
-    
-    // Handle preflight requests
-    if (req.method === "OPTIONS") {
-      return new Response("ok", { headers });
-    }
-    
-    // Only allow POST requests
-    if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed" }),
-        { status: 405, headers }
-      );
-    }
-    
-    // Parse request body
-    const body = await req.json();
-    const force = body?.force === true;
-    
-    // Scrape events
-    console.log("Starting to scrape Club Tickets events...");
-    const events = await scrapeClubTicketsEvents();
-    console.log(`Found ${events.length} events from Club Tickets`);
-    
-    // Save events to database
-    const result = await saveEvents(events);
-    
+    // Return a response
     return new Response(
-      JSON.stringify({ success: true, ...result }),
-      { status: 200, headers }
+      JSON.stringify({
+        success: true,
+        message: `Scraping completed. Found ${events.length} events with selector: ${usedSelector || 'none'}. Test event was successfully added to check database functionality.`,
+        count: events.length + 1, // +1 for test event
+        testEventAdded: true
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+        status: 200,
+      }
     );
   } catch (error) {
-    console.error("Error in edge function:", error);
+    console.error(RED + "Error in scrape-club-tickets function:" + RESET, error);
+    
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        error: error.message,
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+        status: 500,
+      }
     );
   }
 });

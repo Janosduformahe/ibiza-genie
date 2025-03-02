@@ -24,6 +24,9 @@ export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
     const formattedStart = format(startOfSelectedMonth, "yyyy-MM-dd");
     const formattedEnd = format(endOfSelectedMonth, "yyyy-MM-dd");
     
+    console.log(`Fetching events for month from ${formattedStart} to ${formattedEnd}`);
+    console.log(`Source filter: ${source || 'none (all sources)'}`);
+    
     let query = supabase
       .from("events")
       .select("*")
@@ -40,6 +43,11 @@ export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
     if (error) {
       console.error("Error fetching events:", error);
       throw new Error(error.message);
+    }
+    
+    console.log(`Found ${data?.length || 0} events in the selected month`);
+    if (data && data.length > 0) {
+      console.log("Sample event:", data[0]);
     }
     
     return data || [];
