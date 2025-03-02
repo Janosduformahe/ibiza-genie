@@ -1,15 +1,19 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
 interface EventScraperProps {
   refetchEvents: () => void;
 }
+
 export const EventScraper = ({
   refetchEvents
 }: EventScraperProps) => {
   const [isScraperRunning, setIsScraperRunning] = useState(false);
+  
   const runScraperNow = async () => {
     if (isScraperRunning) return;
     setIsScraperRunning(true);
@@ -73,5 +77,17 @@ export const EventScraper = ({
       setIsScraperRunning(false);
     }
   };
-  return;
+  
+  return (
+    <Button 
+      variant="outline" 
+      size="sm" 
+      onClick={runScraperNow}
+      disabled={isScraperRunning}
+      className="text-white bg-opacity-20 backdrop-filter backdrop-blur-lg border-white/20 hover:bg-white/20"
+    >
+      <RefreshCw className={`mr-2 h-4 w-4 ${isScraperRunning ? 'animate-spin' : ''}`} />
+      {isScraperRunning ? 'Updating...' : 'Update Events'}
+    </Button>
+  );
 };
