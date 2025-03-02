@@ -6,7 +6,7 @@ import { DailyEvents } from "@/components/events/DailyEvents";
 import { useEvents } from "@/hooks/use-events";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { addDays, format, startOfToday } from "date-fns";
+import { format, startOfToday } from "date-fns";
 import { CalendarDays, PartyPopper, Filter, Globe, Clock, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -69,10 +69,30 @@ const PartyCalendar = () => {
         });
       } else {
         console.log("Scraper response:", data);
-        toast({
-          title: "Events scraping completed!",
-          description: `Successfully scraped ${data?.count || 0} new events.`,
-        });
+        
+        if (data.count === 0) {
+          toast({
+            title: "No new events found",
+            description: "The scraper didn't find any new events to add.",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Events scraping completed!",
+            description: `Successfully scraped ${data.count || 0} new events.`,
+          });
+        }
+        
+        // Show results by source
+        if (data.results && Array.isArray(data.results)) {
+          data.results.forEach(result => {
+            if (result.success) {
+              console.log(`${result.source}: Added ${result.inserted} events, skipped ${result.skipped} events`);
+            } else {
+              console.error(`${result.source}: ${result.error}`);
+            }
+          });
+        }
         
         // Refresh the events data
         refetch();
@@ -114,7 +134,6 @@ const PartyCalendar = () => {
                 <SelectItem value="all">All sources</SelectItem>
                 <SelectItem value="clubtickets.com">Club Tickets</SelectItem>
                 <SelectItem value="ibiza-spotlight.com">Ibiza Spotlight</SelectItem>
-                <SelectItem value="jigsawstack">Jigsaw AI</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -181,7 +200,7 @@ const PartyCalendar = () => {
                 <span className="font-medium">Auto-Update Schedule</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Our system automatically scrapes event data every 48 hours from Club Tickets and other Ibiza venues to keep this calendar up-to-date with the latest parties.
+                Our system automatically scrapes event data every 48 hours from various Ibiza venues to keep this calendar up-to-date with the latest parties.
               </p>
             </div>
           </div>
