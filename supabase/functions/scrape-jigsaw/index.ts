@@ -1,8 +1,33 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { corsHeaders } from '../_shared/cors.ts'
+// Follow this setup guide to integrate the Deno runtime into your application:
+// https://deno.land/manual/examples/deploy_node_npm
 
-const JIGSAW_API_URL = "https://api.jigsawstack.com/v1/web/ai_scrape"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.48.1'
+import { JigsawStack } from 'https://esm.sh/jigsawstack@0.0.27'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Define the Jigsaw API key from Supabase secrets
+const JIGSAW_API_KEY = Deno.env.get('JIGSAW') || ''
+
+// Initialize the Jigsaw client
+const jigsaw = new JigsawStack(JIGSAW_API_KEY)
+
+// Event interface to match our database schema
+interface Event {
+  name: string
+  date: string
+  club?: string
+  ticket_link?: string
+  music_style?: string[]
+  lineup?: string[]
+  description?: string
+  source: string
+  price_range?: string
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -11,256 +36,235 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get JIGSAW API key from environment variables
-    const JIGSAW_API_KEY = Deno.env.get('JIGSAW')
-    if (!JIGSAW_API_KEY) {
-      console.error('Missing JIGSAW API key')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Missing JIGSAW API key. Please set it in your Supabase Edge Function secrets.'
-        }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      )
-    }
-
-    // Parse request body
-    const requestData = await req.json().catch(() => ({}))
-    const maxPages = requestData.maxPages || 12
-    console.log(`Starting Jigsaw scraper with maxPages=${maxPages}`)
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    console.log('Starting Jigsaw scraper with maxPages=30')
     
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase credentials')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Missing Supabase credentials'
-        }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      )
-    }
+    // Parse the request body
+    const { maxPages = 30 } = await req.json()
     
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Configure the AI scraping parameters for multiple Ibiza event websites
-    const scrapeTargets = [
+    
+    // Define sources to scrape (only using the two supported sites)
+    const sources = [
       {
-        url: "https://www.clubtickets.com/es/ibiza",
-        source: "clubtickets.com"
+        name: 'ibiza-spotlight.com',
+        url: 'https://www.ibiza-spotlight.com/clubbing/calendar',
       },
       {
-        url: "https://www.ibiza-spotlight.com/clubbing/calendar",
-        source: "ibiza-spotlight.com"
+        name: 'clubtickets.com',
+        url: 'https://www.clubtickets.com/es/ibiza',
       }
     ]
-
-    let totalInsertedCount = 0
+    
+    // Track results for each source
     const results = []
-
-    // Process each target website
-    for (const target of scrapeTargets) {
-      console.log(`Scraping ${target.url} for Ibiza events...`)
-      
-      const aiScrapeParams = {
-        url: target.url,
-        prompt: `Extract all upcoming parties and events in Ibiza from this website. For each event, I need:
-        1. Event name (string)
-        2. Date and time in ISO format (string in format YYYY-MM-DDTHH:MM:SS)
-        3. Club/venue name (string)
-        4. Ticket link (full URL string)
-        5. Music style/genre (array of strings)
-        6. Lineup/DJs (array of strings with artist names)
-        7. Price range (string)
-        8. Description (string with brief event description)
-        
-        Return a JSON array of objects, where each object represents an event with these properties.
-        If any field is not available, return null for that field.
-        Try to extract as many events as possible, especially for future dates.`,
-        parsing_strategy: "structured",
-        max_pages: maxPages, 
-      }
-
+    let totalInsertedCount = 0
+    
+    // Process each source
+    for (const source of sources) {
       try {
-        // Make request to Jigsaw AI Scrape API
-        console.log(`Calling Jigsaw AI Scrape API for ${target.source}...`)
-        const response = await fetch(JIGSAW_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': JIGSAW_API_KEY,
-            ...corsHeaders
-          },
-          body: JSON.stringify(aiScrapeParams)
-        })
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error(`Jigsaw API Error for ${target.source}:`, errorText)
-          results.push({
-            source: target.source,
-            success: false,
-            error: `API error: ${response.status} ${errorText}`
-          })
-          continue
-        }
-
-        const jigsawData = await response.json()
-        console.log(`Jigsaw AI response received for ${target.source}:`, 
-          JSON.stringify(jigsawData).substring(0, 200) + '...')
-
-        // Extract events from Jigsaw response
-        let eventsData = []
+        console.log(`Calling Jigsaw AI Scrape API for ${source.name}...`)
+        console.log(`Scraping ${source.url} for Ibiza events...`)
         
-        if (jigsawData.data && Array.isArray(jigsawData.data)) {
-          eventsData = jigsawData.data
-        } else if (jigsawData.content) {
-          // Try to parse content as JSON if it's a string
-          try {
-            if (typeof jigsawData.content === 'string') {
-              const parsed = JSON.parse(jigsawData.content)
-              if (Array.isArray(parsed)) {
-                eventsData = parsed
-              } else if (parsed.events && Array.isArray(parsed.events)) {
-                eventsData = parsed.events
-              }
-            } else if (Array.isArray(jigsawData.content)) {
-              eventsData = jigsawData.content
-            }
-          } catch (e) {
-            console.error(`Failed to parse Jigsaw content as JSON for ${target.source}:`, e)
-          }
-        }
-
-        console.log(`Found ${eventsData.length} events to process from ${target.source}`)
-        
-        let insertedCount = 0
-        let skippedCount = 0
-        const sampleEvents = []
-
-        // Process and insert events
-        for (const event of eventsData) {
-          // Skip if missing essential data
-          if (!event.name) {
-            console.log('Skipping event with missing name:', event)
-            skippedCount++
-            continue
-          }
+        // Define the scraping prompt based on the source
+        const model = 'gpt-4o'
+        let prompt = `Extract all party and event information from this Ibiza events webpage. For each event, extract:
+          - Name of the event/party
+          - Date (in ISO format YYYY-MM-DD)
+          - Time (if available)
+          - Club/venue name
+          - Ticket link (if available)
+          - Price range (if available)
+          - Music style/genre (as an array of strings)
+          - Lineup (as an array of DJs/artists)
+          - Brief description (if available)
           
-          // Try to validate and format the date
-          let eventDate = null
-          if (event.date) {
-            try {
-              eventDate = new Date(event.date).toISOString()
-              // Skip past events
-              const today = new Date()
-              if (new Date(eventDate) < today) {
-                console.log(`Skipping past event: ${event.name} on ${eventDate}`)
-                skippedCount++
+          Return the data as a clean JSON array of objects with these properties: name, date, club, ticket_link, price_range, music_style (array), lineup (array), description`
+        
+        // Customize prompt slightly for each source if needed
+        if (source.name === 'ibiza-spotlight.com') {
+          prompt += '\nNote: Pay special attention to the event calendar format on Ibiza Spotlight.'
+        } else if (source.name === 'clubtickets.com') {
+          prompt += '\nNote: This site sells tickets so make sure to capture the correct URLs and pricing information.'
+        }
+        
+        // Call Jigsaw AI to scrape the website
+        const data = await jigsaw.webScrape({
+          url: source.url,
+          prompt: prompt,
+          maxPages: maxPages,
+          model: model,
+          scrollToBottom: false,
+          navigationTimeout: 30000,
+          waitForSelector: source.name === 'ibiza-spotlight.com' ? '.event' : '.event-item'
+        })
+        
+        // Process the scraped data
+        let scrapedEvents = []
+        
+        if (data && typeof data === 'string') {
+          // Try to parse the response as JSON
+          try {
+            const parsed = JSON.parse(data)
+            if (Array.isArray(parsed)) {
+              scrapedEvents = parsed
+            } else if (parsed.data && Array.isArray(parsed.data)) {
+              scrapedEvents = parsed.data
+            }
+          } catch (parseError) {
+            console.error(`Error parsing JSON response from Jigsaw for ${source.name}:`, parseError)
+            
+            // Try to extract JSON from text response (sometimes Jigsaw wraps JSON in text)
+            const jsonMatch = data.match(/\[[\s\S]*?\]/)
+            if (jsonMatch) {
+              try {
+                scrapedEvents = JSON.parse(jsonMatch[0])
+              } catch (matchError) {
+                console.error(`Failed to extract JSON from text for ${source.name}:`, matchError)
+              }
+            }
+          }
+        }
+        
+        console.log(`Extracted ${scrapedEvents.length} events from ${source.name}`)
+        
+        // Transform and validate events
+        const validEvents: Event[] = []
+        const invalidEvents: any[] = []
+        
+        for (const event of scrapedEvents) {
+          try {
+            // Basic validation
+            if (!event.name || !event.date) {
+              invalidEvents.push({ ...event, reason: 'Missing required fields' })
+              continue
+            }
+            
+            // Parse and validate date
+            let eventDate: Date
+            
+            // Handle different date formats
+            if (typeof event.date === 'string') {
+              // If time is separate, try to combine
+              let dateString = event.date
+              if (event.time && typeof event.time === 'string') {
+                dateString = `${dateString} ${event.time}`
+              }
+              
+              // Try different date formats
+              try {
+                // First try direct ISO parsing
+                eventDate = new Date(dateString)
+                
+                // Check if valid
+                if (isNaN(eventDate.getTime())) {
+                  // Try some common European formats (DD/MM/YYYY)
+                  const dateParts = dateString.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/)
+                  if (dateParts) {
+                    eventDate = new Date(`${dateParts[3]}-${dateParts[2].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`)
+                  }
+                }
+                
+                // If still invalid, reject
+                if (isNaN(eventDate.getTime())) {
+                  throw new Error('Invalid date format')
+                }
+              } catch (dateError) {
+                invalidEvents.push({ ...event, reason: 'Invalid date format', error: dateError.message })
                 continue
               }
-            } catch (e) {
-              console.log(`Invalid date format for event ${event.name}: ${event.date}`)
-              // If date is invalid, try to continue but use current date
-              eventDate = new Date().toISOString()
-            }
-          } else {
-            console.log('Skipping event with missing date:', event)
-            skippedCount++
-            continue
-          }
-
-          // Format the event data for insertion
-          const eventData = {
-            name: event.name,
-            date: eventDate,
-            club: event.club || event.venue,
-            ticket_link: event.ticket_link || event.ticketLink,
-            music_style: Array.isArray(event.music_style) ? event.music_style : 
-                        (typeof event.music_style === 'string' ? [event.music_style] : 
-                        (event.genre ? (Array.isArray(event.genre) ? event.genre : [event.genre]) : null)),
-            lineup: Array.isArray(event.lineup) ? event.lineup : 
-                  (typeof event.lineup === 'string' ? [event.lineup] :
-                  (event.djs ? (Array.isArray(event.djs) ? event.djs : [event.djs]) : null)),
-            price_range: event.price_range || event.price,
-            description: event.description,
-            source: target.source
-          }
-
-          if (sampleEvents.length < 2) {
-            sampleEvents.push(eventData)
-          }
-
-          // Check if this event already exists (by name and date)
-          const { data: existingEvents, error: checkError } = await supabase
-            .from('events')
-            .select('id')
-            .eq('name', eventData.name)
-            .eq('date', eventData.date)
-
-          if (checkError) {
-            console.error('Error checking for existing event:', checkError)
-            continue
-          }
-
-          // If event doesn't exist, insert it
-          if (!existingEvents || existingEvents.length === 0) {
-            const { error: insertError } = await supabase
-              .from('events')
-              .insert(eventData)
-
-            if (insertError) {
-              console.error('Error inserting event:', insertError)
             } else {
-              insertedCount++
-              totalInsertedCount++
+              invalidEvents.push({ ...event, reason: 'Date is not a string' })
+              continue
             }
-          } else {
-            console.log(`Event already exists: ${eventData.name} on ${eventData.date}`)
-            skippedCount++
+            
+            // Format arrays properly
+            const music_style = Array.isArray(event.music_style) 
+              ? event.music_style 
+              : (typeof event.music_style === 'string' ? [event.music_style] : [])
+            
+            const lineup = Array.isArray(event.lineup) 
+              ? event.lineup 
+              : (typeof event.lineup === 'string' ? [event.lineup] : [])
+            
+            // Create a valid event object
+            const validEvent: Event = {
+              name: event.name,
+              date: eventDate.toISOString(),
+              club: event.club || event.venue || undefined,
+              ticket_link: event.ticket_link || undefined,
+              music_style: music_style,
+              lineup: lineup,
+              description: event.description || undefined,
+              price_range: event.price_range || undefined,
+              source: source.name
+            }
+            
+            validEvents.push(validEvent)
+          } catch (validationError) {
+            invalidEvents.push({ ...event, reason: 'Validation error', error: validationError.message })
           }
         }
-
+        
+        console.log(`${validEvents.length} valid events, ${invalidEvents.length} invalid events from ${source.name}`)
+        
+        // Insert valid events into the database
+        let insertedCount = 0
+        let skippedCount = 0
+        
+        // Insert events in batches to avoid timeouts
+        const BATCH_SIZE = 20
+        for (let i = 0; i < validEvents.length; i += BATCH_SIZE) {
+          const batch = validEvents.slice(i, i + BATCH_SIZE)
+          
+          // Insert events with upsert to avoid duplicates
+          const { data: insertedData, error: insertError } = await supabase
+            .from('events')
+            .upsert(
+              batch,
+              { 
+                onConflict: 'name,date,source',
+                ignoreDuplicates: true 
+              }
+            )
+          
+          if (insertError) {
+            console.error(`Error inserting events batch from ${source.name}:`, insertError)
+          } else {
+            // Count inserted vs skipped (duplicates)
+            insertedCount += batch.length - (insertError ? batch.length : 0)
+            skippedCount += insertError ? batch.length : 0
+          }
+        }
+        
+        totalInsertedCount += insertedCount
+        
+        // Record results for this source
         results.push({
-          source: target.source,
+          source: source.name,
           success: true,
           inserted: insertedCount,
           skipped: skippedCount,
-          sample: sampleEvents
+          invalid: invalidEvents.length
         })
         
-        console.log(`Successfully processed ${insertedCount} new events from ${target.source}`)
-        console.log(`Skipped ${skippedCount} events from ${target.source}`)
-
-      } catch (error) {
-        console.error(`Error scraping ${target.source}:`, error)
+        console.log(`Successfully added ${insertedCount} events from ${source.name}, skipped ${skippedCount} duplicates`)
+      } catch (sourceError) {
+        console.error(`Jigsaw API Error for ${source.name}:`, sourceError)
         results.push({
-          source: target.source,
+          source: source.name,
           success: false,
-          error: error.message
+          error: sourceError.message || 'Unknown error'
         })
       }
     }
-
+    
+    // Return the results
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Scraped and processed ${totalInsertedCount} new events`,
         count: totalInsertedCount,
         results: results
       }),
@@ -268,7 +272,7 @@ Deno.serve(async (req) => {
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders
-        }
+        },
       }
     )
   } catch (error) {
@@ -277,14 +281,14 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message || 'Unknown error occurred'
       }),
       {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders
-        }
+        },
       }
     )
   }

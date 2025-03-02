@@ -56,8 +56,10 @@ const PartyCalendar = () => {
     });
     
     try {
+      console.log("Starting scraper with maxPages=30");
+      
       const { data, error } = await supabase.functions.invoke('scrape-jigsaw', {
-        body: { maxPages: 30 }  // Increase max pages to get more events for the whole year
+        body: { maxPages: 30 }
       });
       
       if (error) {
@@ -73,7 +75,7 @@ const PartyCalendar = () => {
         if (data.count === 0) {
           toast({
             title: "No new events found",
-            description: "The scraper didn't find any new events to add.",
+            description: "The scraper didn't find any new events to add. Check logs for details.",
             variant: "default",
           });
         } else {
@@ -83,14 +85,19 @@ const PartyCalendar = () => {
           });
         }
         
-        // Show results by source
+        // Show detailed results by source
         if (data.results && Array.isArray(data.results)) {
           data.results.forEach(result => {
-            if (result.success) {
-              console.log(`${result.source}: Added ${result.inserted} events, skipped ${result.skipped} events`);
-            } else {
-              console.error(`${result.source}: ${result.error}`);
-            }
+            const title = result.success ? `${result.source}: Completed` : `${result.source}: Failed`;
+            const description = result.success
+              ? `Added ${result.inserted} events, skipped ${result.skipped} duplicates, ${result.invalid || 0} invalid`
+              : `Error: ${result.error}`;
+              
+            toast({
+              title: title,
+              description: description,
+              variant: result.success ? "default" : "destructive",
+            });
           });
         }
         
@@ -157,6 +164,16 @@ const PartyCalendar = () => {
             </Button>
           </div>
         </div>
+        
+        {/* Add alert for empty calendar with instructions */}
+        {events.length === 0 && !isLoading && (
+          <Alert className="mb-4 bg-white/90">
+            <AlertTitle>No events found</AlertTitle>
+            <AlertDescription>
+              Click "Run Scraper Now" to fetch events from Ibiza party websites. The scraper will look for upcoming parties and events throughout the whole year.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="grid md:grid-cols-[300px_1fr] gap-6">
           <div className="order-2 md:order-1">
