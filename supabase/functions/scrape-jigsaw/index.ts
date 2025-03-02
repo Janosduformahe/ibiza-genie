@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.170.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.37.0";
-import { JigsawStack } from "https://esm.sh/jigsawstack@latest";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +10,7 @@ const corsHeaders = {
 // Create a Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const jigsawApiKey = Deno.env.get("JIGSAW") || ""; // Updated to use the correct secret name
+const jigsawApiKey = Deno.env.get("JIGSAW") || ""; // Using the secret name "JIGSAW"
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -32,11 +31,6 @@ serve(async (req) => {
       );
     }
 
-    // Initialize JigsawStack with API key
-    const jigsawstack = JigsawStack({
-      apiKey: jigsawApiKey,
-    });
-
     // URLs to scrape
     const urlsToScrape = [
       "https://www.club-tickets.de/de/tickets.htm",
@@ -50,11 +44,26 @@ serve(async (req) => {
       console.log(`Scraping ${url}`);
       
       try {
-        const result = await jigsawstack.web.ai_scrape({
-          url: url,
-          element_prompts: ["all upcoming events with date, name, club, link"],
+        // Make direct API request to Jigsaw with the x-api-key header
+        const response = await fetch("https://api.jigsawstack.com/v1/web/ai_scrape", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": jigsawApiKey
+          },
+          body: JSON.stringify({
+            url: url,
+            element_prompts: ["all upcoming events with date, name, club, link"]
+          })
         });
         
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Jigsaw API error (${response.status}):`, errorText);
+          throw new Error(`Jigsaw API returned ${response.status}: ${errorText}`);
+        }
+        
+        const result = await response.json();
         console.log("Scraping result:", JSON.stringify(result, null, 2));
         
         // Process the scraped data
