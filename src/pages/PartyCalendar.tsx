@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { CalendarView } from "@/components/events/CalendarView";
@@ -52,13 +51,12 @@ const PartyCalendar = () => {
     setIsScraperRunning(true);
     toast({
       title: "Scraper started",
-      description: "Fetching events for the whole year. This may take a few minutes.",
+      description: "Fetching events with IP rotation. This may take a few minutes.",
     });
     
     try {
       console.log("Starting scraper with maxPages=30");
       
-      // Fix URL error by using the proper function invocation with error handling
       const { data, error } = await supabase.functions.invoke('scrape-jigsaw', {
         body: { 
           maxPages: 30,
@@ -70,49 +68,76 @@ const PartyCalendar = () => {
         console.error("Error running scraper:", error);
         toast({
           title: "Scraper error",
-          description: "Failed to run the event scraper. Please try again later.",
+          description: `Failed to run the event scraper: ${error.message || "Unknown error"}`,
           variant: "destructive",
         });
       } else {
         console.log("Scraper response:", data);
         
         if (!data || (data.count !== undefined && data.count === 0)) {
-          toast({
-            title: "No new events found",
-            description: "The scraper didn't find any new events to add. Check logs for details.",
-            variant: "default",
-          });
+          if (data && data.results && Array.isArray(data.results)) {
+            const errorSources = data.results.filter(r => !r.success);
+            
+            if (errorSources.length > 0) {
+              errorSources.forEach(result => {
+                toast({
+                  title: `${result.source}: Failed`,
+                  description: `Error: ${result.error}`,
+                  variant: "destructive",
+                });
+              });
+              
+              toast({
+                title: "Scraping encountered issues",
+                description: "Some sources couldn't be scraped. The system tried alternative methods automatically.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "No new events found",
+                description: "The scraper ran successfully but didn't find any new events to add.",
+                variant: "default",
+              });
+            }
+          } else {
+            toast({
+              title: "No events found",
+              description: "The scraper didn't find any events. This might be because the websites have changed their structure.",
+              variant: "default",
+            });
+          }
         } else {
           toast({
             title: "Events scraping completed!",
             description: `Successfully scraped ${data.count || 0} new events.`,
           });
-        }
-        
-        // Show detailed results by source
-        if (data && data.results && Array.isArray(data.results)) {
-          data.results.forEach(result => {
-            const title = result.success ? `${result.source}: Completed` : `${result.source}: Failed`;
-            const description = result.success
-              ? `Added ${result.inserted} events, skipped ${result.skipped} duplicates, ${result.invalid || 0} invalid`
-              : `Error: ${result.error}`;
+          
+          if (data && data.results && Array.isArray(data.results)) {
+            data.results.forEach(result => {
+              const title = result.success 
+                ? `${result.source}: Completed` 
+                : `${result.source}: Failed`;
               
-            toast({
-              title: title,
-              description: description,
-              variant: result.success ? "default" : "destructive",
+              const description = result.success
+                ? `Added ${result.inserted} events, skipped ${result.skipped} duplicates, ${result.invalid || 0} invalid`
+                : `Error: ${result.error}`;
+                
+              toast({
+                title: title,
+                description: description,
+                variant: result.success ? "default" : "destructive",
+              });
             });
-          });
+          }
         }
         
-        // Refresh the events data
         refetch();
       }
     } catch (err) {
       console.error("Error invoking scraper function:", err);
       toast({
         title: "Scraper error",
-        description: "Failed to run the event scraper. Please try again later.",
+        description: `Failed to run the event scraper: ${err instanceof Error ? err.message : "Unknown error"}`,
         variant: "destructive",
       });
     } finally {
@@ -178,12 +203,11 @@ const PartyCalendar = () => {
           </Alert>
         )}
         
-        {/* Add alert for empty calendar with instructions */}
         {events.length === 0 && !isLoading && !isError && (
           <Alert className="mb-4 bg-white/90">
             <AlertTitle>No events found</AlertTitle>
             <AlertDescription>
-              Click "Run Scraper Now" to fetch events from Ibiza party websites. The scraper will look for upcoming parties and events throughout the whole year.
+              Click "Run Scraper Now" to fetch events from Ibiza party websites. The scraper uses IP rotation to avoid being blocked.
             </AlertDescription>
           </Alert>
         )}
@@ -247,7 +271,7 @@ const PartyCalendar = () => {
         <div className="mt-8 flex justify-center text-white/80 text-sm">
           <div className="flex items-center gap-1">
             <Globe className="h-4 w-4" />
-            <span>Events are automatically updated every 48 hours</span>
+            <span>Events are automatically updated every 48 hours with IP rotation</span>
           </div>
         </div>
       </div>
