@@ -4,6 +4,7 @@ import { Navigation } from "@/components/Navigation";
 import { CalendarView } from "@/components/events/CalendarView";
 import { DailyEvents } from "@/components/events/DailyEvents";
 import { useEvents } from "@/hooks/use-events";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { addDays, format, startOfToday } from "date-fns";
 import { CalendarDays, PartyPopper, Filter, Globe, Clock } from "lucide-react";
