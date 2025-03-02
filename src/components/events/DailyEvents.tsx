@@ -44,6 +44,7 @@ export const DailyEvents = ({ date, events, isLoading }: DailyEventsProps) => {
                 lineup={event.lineup}
                 description={event.description}
                 source={event.source}
+                price_range={event.price_range}
               />
             ))}
           </div>

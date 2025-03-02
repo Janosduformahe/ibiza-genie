@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 export interface Event {
   id: string;
@@ -27,30 +28,45 @@ export const useEvents = (selectedDate: Date = new Date(), source?: string) => {
     console.log(`Fetching events for month from ${formattedStart} to ${formattedEnd}`);
     console.log(`Source filter: ${source || 'none (all sources)'}`);
     
-    let query = supabase
-      .from("events")
-      .select("*")
-      .gte("date", formattedStart)
-      .lte("date", formattedEnd);
-    
-    // Add source filter if provided
-    if (source) {
-      query = query.eq("source", source);
+    try {
+      let query = supabase
+        .from("events")
+        .select("*")
+        .gte("date", formattedStart)
+        .lte("date", formattedEnd);
+      
+      // Add source filter if provided
+      if (source) {
+        query = query.eq("source", source);
+      }
+      
+      const { data, error } = await query.order("date", { ascending: true });
+      
+      if (error) {
+        console.error("Error fetching events:", error);
+        toast({
+          title: "Error fetching events",
+          description: error.message,
+          variant: "destructive"
+        });
+        throw new Error(error.message);
+      }
+      
+      console.log(`Found ${data?.length || 0} events in the selected month`);
+      if (data && data.length > 0) {
+        console.log("Sample event:", data[0]);
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error("Error in fetchEvents:", error);
+      toast({
+        title: "Error fetching events",
+        description: "Failed to load events. Please try again later.",
+        variant: "destructive"
+      });
+      return [];
     }
-    
-    const { data, error } = await query.order("date", { ascending: true });
-    
-    if (error) {
-      console.error("Error fetching events:", error);
-      throw new Error(error.message);
-    }
-    
-    console.log(`Found ${data?.length || 0} events in the selected month`);
-    if (data && data.length > 0) {
-      console.log("Sample event:", data[0]);
-    }
-    
-    return data || [];
   };
 
   const getEventsForDay = (events: Event[], day: Date): Event[] => {
