@@ -11,7 +11,7 @@ const corsHeaders = {
 // Create a Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const jigsawApiKey = Deno.env.get("JIGSAW_API_KEY") || "";
+const jigsawApiKey = Deno.env.get("JIGSAW") || ""; // Updated to use the correct secret name
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -25,9 +25,9 @@ serve(async (req) => {
     console.log("Starting Jigsaw scraper function");
     
     if (!jigsawApiKey) {
-      console.error("JIGSAW_API_KEY environment variable is not set");
+      console.error("JIGSAW secret is not set");
       return new Response(
-        JSON.stringify({ error: "JIGSAW_API_KEY not configured" }),
+        JSON.stringify({ error: "JIGSAW API key not configured" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
