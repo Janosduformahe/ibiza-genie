@@ -22,9 +22,9 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    console.log('Starting Jigsaw AI scraper for ClubTickets...')
+    console.log('Starting Jigsaw AI scraper for Ibiza party events...')
 
-    // Configure the AI scraping parameters for ClubTickets
+    // Configure the AI scraping parameters for events
     const aiScrapeParams = {
       url: "https://www.clubtickets.com/es/",
       prompt: `Extract all upcoming events in Ibiza from this website. For each event, find the following details:
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       
       Create a comprehensive, structured list of all events with these details. If the webpage shows event listings, navigate to event detail pages if needed to gather complete information. If a field is not available, return null for that field.`,
       parsing_strategy: "structured", // We want structured data
-      max_pages: 10, // Limit to 10 pages to avoid excessive scraping
+      max_pages: 12, // Limit to 12 pages to get comprehensive data without excessive scraping
     }
 
     // Make request to Jigsaw AI Scrape API
@@ -69,7 +69,6 @@ Deno.serve(async (req) => {
 
     try {
       // Extract events from Jigsaw response
-      // The actual structure might vary based on Jigsaw's response format
       if (jigsawData.data && Array.isArray(jigsawData.data)) {
         eventsData = jigsawData.data
       } else if (jigsawData.content && typeof jigsawData.content === 'string') {
@@ -108,7 +107,7 @@ Deno.serve(async (req) => {
                  (event.djs ? [event.djs] : null),
           price_range: event.price_range || event.price,
           description: event.description,
-          source: 'jigsawstack'
+          source: 'clubtickets.com'
         }
 
         // Check if this event already exists (by name and date)

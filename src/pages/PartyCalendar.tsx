@@ -4,10 +4,9 @@ import { Navigation } from "@/components/Navigation";
 import { CalendarView } from "@/components/events/CalendarView";
 import { DailyEvents } from "@/components/events/DailyEvents";
 import { useEvents } from "@/hooks/use-events";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { addDays, format, startOfToday } from "date-fns";
-import { CalendarDays, PartyPopper, Filter, Globe } from "lucide-react";
+import { CalendarDays, PartyPopper, Filter, Globe, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -117,6 +116,16 @@ const PartyCalendar = () => {
                   </li>
                 )}
               </ul>
+            </div>
+            
+            <div className="bg-white/90 rounded-lg shadow p-4 mt-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="font-medium">Auto-Update Schedule</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Our system automatically scrapes event data every 48 hours from Club Tickets and other Ibiza venues to keep this calendar up-to-date with the latest parties.
+              </p>
             </div>
           </div>
           
