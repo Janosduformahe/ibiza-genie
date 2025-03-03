@@ -1,3 +1,4 @@
+
 import { ChatInterface } from "@/components/ChatInterface";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { ShoppingBag, BookOpen } from "lucide-react";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#8B5CF6] via-[#D946EF] to-[#0EA5E9]">
+    <div className="min-h-screen bg-gradient-to-br from-[#0EA5E9] via-[#33C3F0] to-[#0FA0CE]">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8 md:py-12">
@@ -21,7 +22,7 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button asChild size="lg" 
-                className="bg-white text-[#8B5CF6] hover:bg-white/90 transition-all">
+                className="bg-white text-[#0EA5E9] hover:bg-white/90 transition-all">
                 <Link to="/shop">Visit Shop</Link>
               </Button>
               <Button asChild size="lg" variant="outline" 
