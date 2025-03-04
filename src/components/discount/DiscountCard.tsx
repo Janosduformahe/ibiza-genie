@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
-import { PartyIcon, Ticket, Calendar, Percent } from 'lucide-react';
+import { PartyPopper, Ticket, Calendar, Percent } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export interface DiscountOffer {
