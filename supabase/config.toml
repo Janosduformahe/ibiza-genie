@@ -4,3 +4,6 @@ project_id = "test"
 verify_jwt = false
 [functions.schedule-events-update]
 verify_jwt = false
+[functions.chat]
+verify_jwt = false
+

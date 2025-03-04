@@ -37,6 +37,14 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Get the DeepSeek API Key
+    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+    
+    if (!DEEPSEEK_API_KEY) {
+      console.error("DEEPSEEK_API_KEY is not set in environment variables");
+      throw new Error("Missing API key configuration");
+    }
 
     // Get the message from the request
     const { message } = await req.json() as Message;
@@ -150,21 +158,75 @@ serve(async (req) => {
       }
     }
 
-    // Create a response based on the message and event context
+    // Create prompt for DeepSeek
+    let prompt = `
+    Eres Biza, un asistente virtual especializado en Ibiza. Tu objetivo es ayudar a los usuarios a descubrir lo mejor de la isla, especialmente fiestas, eventos, restaurantes y playas. Responde siempre en español de forma amigable y concisa.
+
+    Información del usuario: "${message}"
+    `;
+
+    // Add event context if available
+    if (eventContext) {
+      prompt += `\n\nDatos sobre eventos disponibles:\n${eventContext}`;
+    }
+
+    // Call DeepSeek API
+    console.log("Calling DeepSeek API with prompt");
+    const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          {
+            role: "system",
+            content: "Eres Biza, un asistente virtual especializado en Ibiza. Responde siempre en español de manera amigable, útil y concisa."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+
+    // Parse API response
+    if (!deepseekResponse.ok) {
+      const errorText = await deepseekResponse.text();
+      console.error("DeepSeek API Error:", deepseekResponse.status, errorText);
+      throw new Error(`DeepSeek API error: ${deepseekResponse.status}`);
+    }
+
+    const data = await deepseekResponse.json();
+    console.log("Received response from DeepSeek API");
+
+    // Get response text from the API
     let response = "";
-    
-    if (message.toLowerCase().includes("hola") || message.toLowerCase().includes("hi") || message.toLowerCase().includes("hello")) {
-      response = "¡Hola! Soy Biza, tu guía virtual de Ibiza. ¿Cómo puedo ayudarte a planificar tu experiencia en Ibiza hoy?";
-    } else if (isAskingAboutEvents) {
-      response = `${eventContext}\n\n¿Hay algo específico que te gustaría saber sobre estos eventos?`;
-    } else if (message.toLowerCase().includes("playa") || message.toLowerCase().includes("playas") || message.toLowerCase().includes("beach")) {
-      response = "¡Ibiza tiene algunas de las playas más hermosas del Mediterráneo! Lugares populares incluyen Playa d'en Bossa, Cala Comte y Las Salinas. ¿Te gustaría recomendaciones para algún tipo específico de playa?";
-    } else if (message.toLowerCase().includes("restaurante") || message.toLowerCase().includes("comida") || message.toLowerCase().includes("comer") || message.toLowerCase().includes("food")) {
-      response = "Ibiza tiene opciones culinarias increíbles! Desde beach clubs como Nikki Beach hasta restaurantes de alta cocina como Sublimotion. ¿Qué tipo de cocina o ambiente estás buscando?";
-    } else if (message.toLowerCase().includes("como funciona") || message.toLowerCase().includes("how do you work") || message.toLowerCase().includes("como eres")) {
-      response = "Soy Biza, un asistente virtual especializado en Ibiza. Funciono utilizando inteligencia artificial para responder a tus preguntas sobre la isla. Tengo información sobre eventos, fiestas, restaurantes, playas y más. Mi conocimiento proviene de una base de datos de eventos en Ibiza y de información general sobre la isla. Cuando me preguntas sobre fiestas o eventos, consulto mi base de datos para darte información actualizada. ¡Estoy aquí para hacer que tu experiencia en Ibiza sea inolvidable!";
+    if (data && data.choices && data.choices[0] && data.choices[0].message) {
+      response = data.choices[0].message.content.trim();
     } else {
-      response = "Ibiza es una isla mágica con hermosas playas, increíble vida nocturna y experiencias culturales. ¿Qué aspecto de Ibiza te gustaría explorar?";
+      // Fallback response if API response format is unexpected
+      console.error("Unexpected DeepSeek API response format:", JSON.stringify(data));
+      
+      // Use basic response logic as fallback
+      if (message.toLowerCase().includes("hola") || message.toLowerCase().includes("hi") || message.toLowerCase().includes("hello")) {
+        response = "¡Hola! Soy Biza, tu guía virtual de Ibiza. ¿Cómo puedo ayudarte a planificar tu experiencia en Ibiza hoy?";
+      } else if (isAskingAboutEvents) {
+        response = `${eventContext}\n\n¿Hay algo específico que te gustaría saber sobre estos eventos?`;
+      } else if (message.toLowerCase().includes("playa") || message.toLowerCase().includes("playas") || message.toLowerCase().includes("beach")) {
+        response = "¡Ibiza tiene algunas de las playas más hermosas del Mediterráneo! Lugares populares incluyen Playa d'en Bossa, Cala Comte y Las Salinas. ¿Te gustaría recomendaciones para algún tipo específico de playa?";
+      } else if (message.toLowerCase().includes("restaurante") || message.toLowerCase().includes("comida") || message.toLowerCase().includes("comer") || message.toLowerCase().includes("food")) {
+        response = "Ibiza tiene opciones culinarias increíbles! Desde beach clubs como Nikki Beach hasta restaurantes de alta cocina como Sublimotion. ¿Qué tipo de cocina o ambiente estás buscando?";
+      } else if (message.toLowerCase().includes("como funciona") || message.toLowerCase().includes("how do you work") || message.toLowerCase().includes("como eres")) {
+        response = "Soy Biza, un asistente virtual especializado en Ibiza basado en DeepSeek. Funciono utilizando inteligencia artificial para responder a tus preguntas sobre la isla. Tengo información sobre eventos, fiestas, restaurantes, playas y más. Mi conocimiento proviene de una base de datos de eventos en Ibiza y de información general sobre la isla. Cuando me preguntas sobre fiestas o eventos, consulto mi base de datos para darte información actualizada. ¡Estoy aquí para hacer que tu experiencia en Ibiza sea inolvidable!";
+      } else {
+        response = "Ibiza es una isla mágica con hermosas playas, increíble vida nocturna y experiencias culturales. ¿Qué aspecto de Ibiza te gustaría explorar?";
+      }
     }
 
     // Return the response
