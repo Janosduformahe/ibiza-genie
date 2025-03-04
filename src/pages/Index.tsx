@@ -18,7 +18,7 @@ const Index = () => {
       <Navigation />
       
       {/* Ocean Animation Overlay (modal) */}
-      {showOceanAnimation && <OceanScene isVisible={showOceanAnimation} />}
+      {showOceanAnimation && <OceanScene />}
       
       <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
