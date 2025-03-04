@@ -42,8 +42,8 @@ serve(async (req) => {
     const { message } = await req.json() as Message;
     console.log("Received message:", message);
 
-    // Check if the message is asking about events
-    const isAskingAboutEvents = /party|parties|event|events|club|clubs|dance|music|dj|festival/i.test(message);
+    // Check if the message is asking about events, dates or parties
+    const isAskingAboutEvents = /party|parties|event|events|club|clubs|dance|music|dj|festival|fiesta|fiestas|cuando|fecha|dia|mayo|junio|julio|agosto/i.test(message);
     
     let eventContext = "";
     
@@ -51,10 +51,59 @@ serve(async (req) => {
     if (isAskingAboutEvents) {
       console.log("User is asking about events, fetching event data");
       
-      // Get the next 2 weeks of events
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 14);
+      // Check if asking about a specific date
+      const dateRegex = /(\d{1,2})(?:\s+de\s+|\s+|\/)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|january|february|march|april|may|june|july|august|september|october|november|december)/i;
+      const dateMatch = message.match(dateRegex);
+      
+      let startDate, endDate;
+      
+      if (dateMatch) {
+        // If a specific date is mentioned, search for that date
+        console.log("User is asking about a specific date:", dateMatch[0]);
+        const day = parseInt(dateMatch[1]);
+        let month;
+        
+        // Map month names to month numbers (Spanish and English)
+        const monthMap: {[key: string]: number} = {
+          'enero': 0, 'january': 0,
+          'febrero': 1, 'february': 1,
+          'marzo': 2, 'march': 2,
+          'abril': 3, 'april': 3,
+          'mayo': 4, 'may': 4,
+          'junio': 5, 'june': 5,
+          'julio': 6, 'july': 6,
+          'agosto': 7, 'august': 7,
+          'septiembre': 8, 'september': 8,
+          'octubre': 9, 'october': 9,
+          'noviembre': 10, 'november': 10,
+          'diciembre': 11, 'december': 11
+        };
+        
+        month = monthMap[dateMatch[2].toLowerCase()];
+        
+        if (month !== undefined) {
+          startDate = new Date();
+          startDate.setMonth(month);
+          startDate.setDate(day);
+          
+          // If the date is in the past for this year, assume next year
+          if (startDate < new Date()) {
+            startDate.setFullYear(startDate.getFullYear() + 1);
+          }
+          
+          endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + 1); // Just one day
+        }
+      }
+      
+      // If no specific date was found, get the next 2 weeks
+      if (!startDate || !endDate) {
+        startDate = new Date();
+        endDate = new Date();
+        endDate.setDate(endDate.getDate() + 14);
+      }
+      
+      console.log(`Searching for events between ${startDate.toISOString()} and ${endDate.toISOString()}`);
       
       const { data: events, error } = await supabase
         .from('events')
@@ -70,40 +119,52 @@ serve(async (req) => {
         console.log(`Found ${events.length} upcoming events to include in context`);
         
         // Format events for context
-        eventContext = "Here are some upcoming parties:\n\n";
+        eventContext = "Aquí tienes información sobre las fiestas que buscas:\n\n";
         events.forEach((event: Event) => {
           const eventDate = new Date(event.date);
-          eventContext += `- ${event.name} at ${event.club || 'Ibiza'} on ${eventDate.toDateString()}\n`;
+          const formattedDate = eventDate.toLocaleDateString('es-ES', { 
+            weekday: 'long', 
+            day: 'numeric', 
+            month: 'long' 
+          });
+          
+          eventContext += `- ${event.name} en ${event.club || 'Ibiza'} el ${formattedDate}\n`;
           if (event.music_style && event.music_style.length > 0) {
-            eventContext += `  Music style: ${event.music_style.join(', ')}\n`;
+            eventContext += `  Estilo musical: ${event.music_style.join(', ')}\n`;
           }
           if (event.lineup && event.lineup.length > 0) {
-            eventContext += `  Lineup: ${event.lineup.join(', ')}\n`;
+            eventContext += `  Line-up: ${event.lineup.join(', ')}\n`;
           }
           if (event.price_range) {
-            eventContext += `  Price: ${event.price_range}\n`;
+            eventContext += `  Precio: ${event.price_range}\n`;
           }
-          eventContext += `  Tickets: ${event.ticket_link || 'Not available yet'}\n\n`;
+          eventContext += `  Entradas: ${event.ticket_link || 'No disponibles todavía'}\n\n`;
         });
       } else {
-        console.log("No upcoming events found");
-        eventContext = "I don't see any parties scheduled in the next two weeks. You might want to check our calendar later as we update it regularly.";
+        console.log("No upcoming events found for the requested date");
+        if (dateMatch) {
+          eventContext = `No tengo información sobre fiestas para el ${dateMatch[1]} de ${dateMatch[2]}. Te recomiendo consultar más adelante, ya que actualizamos nuestro calendario regularmente.`;
+        } else {
+          eventContext = "No veo ninguna fiesta programada en las próximas dos semanas. Te recomiendo consultar más adelante, ya que actualizamos nuestro calendario regularmente.";
+        }
       }
     }
 
     // Create a response based on the message and event context
     let response = "";
     
-    if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
-      response = "¡Hola! I'm Biza, your Ibiza AI guide. How can I help you plan your Ibiza experience today?";
+    if (message.toLowerCase().includes("hola") || message.toLowerCase().includes("hi") || message.toLowerCase().includes("hello")) {
+      response = "¡Hola! Soy Biza, tu guía virtual de Ibiza. ¿Cómo puedo ayudarte a planificar tu experiencia en Ibiza hoy?";
     } else if (isAskingAboutEvents) {
-      response = `Let me tell you about parties and events in Ibiza!\n\n${eventContext}\n\nIs there anything specific you'd like to know about these events?`;
-    } else if (message.toLowerCase().includes("beach") || message.toLowerCase().includes("beaches")) {
-      response = "Ibiza has some of the most beautiful beaches in the Mediterranean! Popular spots include Playa d'en Bossa, Cala Comte, and Las Salinas. Would you like recommendations for specific types of beaches?";
-    } else if (message.toLowerCase().includes("restaurant") || message.toLowerCase().includes("food") || message.toLowerCase().includes("eat")) {
-      response = "Ibiza has amazing culinary options! From beach clubs like Nikki Beach to fine dining at restaurants like Sublimotion. What type of cuisine or atmosphere are you looking for?";
+      response = `${eventContext}\n\n¿Hay algo específico que te gustaría saber sobre estos eventos?`;
+    } else if (message.toLowerCase().includes("playa") || message.toLowerCase().includes("playas") || message.toLowerCase().includes("beach")) {
+      response = "¡Ibiza tiene algunas de las playas más hermosas del Mediterráneo! Lugares populares incluyen Playa d'en Bossa, Cala Comte y Las Salinas. ¿Te gustaría recomendaciones para algún tipo específico de playa?";
+    } else if (message.toLowerCase().includes("restaurante") || message.toLowerCase().includes("comida") || message.toLowerCase().includes("comer") || message.toLowerCase().includes("food")) {
+      response = "Ibiza tiene opciones culinarias increíbles! Desde beach clubs como Nikki Beach hasta restaurantes de alta cocina como Sublimotion. ¿Qué tipo de cocina o ambiente estás buscando?";
+    } else if (message.toLowerCase().includes("como funciona") || message.toLowerCase().includes("how do you work") || message.toLowerCase().includes("como eres")) {
+      response = "Soy Biza, un asistente virtual especializado en Ibiza. Funciono utilizando inteligencia artificial para responder a tus preguntas sobre la isla. Tengo información sobre eventos, fiestas, restaurantes, playas y más. Mi conocimiento proviene de una base de datos de eventos en Ibiza y de información general sobre la isla. Cuando me preguntas sobre fiestas o eventos, consulto mi base de datos para darte información actualizada. ¡Estoy aquí para hacer que tu experiencia en Ibiza sea inolvidable!";
     } else {
-      response = "Ibiza is a magical island with beautiful beaches, incredible nightlife, and cultural experiences. What aspect of Ibiza would you like to explore?";
+      response = "Ibiza es una isla mágica con hermosas playas, increíble vida nocturna y experiencias culturales. ¿Qué aspecto de Ibiza te gustaría explorar?";
     }
 
     // Return the response
@@ -115,7 +176,7 @@ serve(async (req) => {
     console.error('Error:', error);
     
     return new Response(
-      JSON.stringify({ response: "I'm having trouble processing your request right now. Please try again later." }),
+      JSON.stringify({ response: "Estoy teniendo problemas para procesar tu solicitud en este momento. Por favor, inténtalo de nuevo más tarde." }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
