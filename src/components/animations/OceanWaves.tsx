@@ -37,10 +37,8 @@ const OceanWaves: React.FC<OceanWavesProps> = ({ isBackground = false }) => {
         color={isBackground ? "#0EA5E9" : "#0EA5E9"}
         factor={isBackground ? 0.2 : 0.4}
         speed={isBackground ? 1 : 2}
-        roughness={0}
-        metalness={0.8}
-        transparent={isBackground}
-        opacity={isBackground ? 0.8 : 1}
+        roughness={0.3}
+        metalness={0.2}
       />
     </mesh>
   );

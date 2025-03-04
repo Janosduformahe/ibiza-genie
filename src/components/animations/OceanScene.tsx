@@ -20,16 +20,16 @@ const OceanScene: React.FC<OceanSceneProps> = ({ isBackground = false }) => {
             ✕
           </button>
         )}
-        <Canvas camera={{ position: [0, 2, 5], fov: 45 }}>
+        <Canvas 
+          camera={{ position: [0, 2, 5], fov: 45 }}
+          gl={{ antialias: true, alpha: true }}
+          dpr={[1, 2]} // Optimized pixel ratio
+        >
           <Suspense fallback={null}>
             <ambientLight intensity={0.5} />
             <directionalLight position={[10, 10, 5]} intensity={1} />
             <OceanWaves isBackground={isBackground} />
-            <OrbitControls 
-              enableZoom={!isBackground}
-              enableRotate={!isBackground}
-              enablePan={!isBackground}
-            />
+            {!isBackground && <OrbitControls enableZoom={true} enableRotate={true} enablePan={false} />}
           </Suspense>
         </Canvas>
       </div>
