@@ -5,27 +5,31 @@ import { OrbitControls } from '@react-three/drei';
 import OceanWaves from './OceanWaves';
 
 interface OceanSceneProps {
-  isVisible: boolean;
+  isBackground?: boolean;
 }
 
-const OceanScene: React.FC<OceanSceneProps> = ({ isVisible }) => {
-  if (!isVisible) return null;
-  
+const OceanScene: React.FC<OceanSceneProps> = ({ isBackground = false }) => {
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-      <div className="relative w-full h-full max-w-4xl max-h-96 mx-auto">
-        <button 
-          className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 text-black"
-          onClick={() => document.dispatchEvent(new CustomEvent('closeOceanAnimation'))}
-        >
-          ✕
-        </button>
+    <div className={isBackground ? "fixed inset-0 -z-10" : "fixed inset-0 z-50 bg-black/70 flex items-center justify-center"}>
+      <div className={isBackground ? "w-full h-full" : "relative w-full h-full max-w-4xl max-h-96 mx-auto"}>
+        {!isBackground && (
+          <button 
+            className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 text-black"
+            onClick={() => document.dispatchEvent(new CustomEvent('closeOceanAnimation'))}
+          >
+            ✕
+          </button>
+        )}
         <Canvas camera={{ position: [0, 2, 5], fov: 45 }}>
           <Suspense fallback={null}>
             <ambientLight intensity={0.5} />
             <directionalLight position={[10, 10, 5]} intensity={1} />
-            <OceanWaves />
-            <OrbitControls enableZoom={true} />
+            <OceanWaves isBackground={isBackground} />
+            <OrbitControls 
+              enableZoom={!isBackground}
+              enableRotate={!isBackground}
+              enablePan={!isBackground}
+            />
           </Suspense>
         </Canvas>
       </div>
