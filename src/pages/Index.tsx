@@ -4,11 +4,18 @@ import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ShoppingBag, BookOpen } from "lucide-react";
+import OceanScene from "@/components/animations/OceanScene";
+import { useOceanAnimation } from "@/hooks/useOceanAnimation";
 
 const Index = () => {
+  const { showOceanAnimation } = useOceanAnimation();
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0EA5E9] via-[#33C3F0] to-[#0FA0CE]">
       <Navigation />
+      
+      {/* Ocean Animation Overlay */}
+      <OceanScene isVisible={showOceanAnimation} />
       
       <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
