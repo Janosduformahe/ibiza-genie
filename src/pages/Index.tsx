@@ -3,12 +3,44 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ShoppingBag, BookOpen } from "lucide-react";
+import { ShoppingBag, BookOpen, Tag } from "lucide-react";
 import OceanScene from "@/components/animations/OceanScene";
 import { useOceanAnimation } from "@/hooks/useOceanAnimation";
+import { DiscountList } from "@/components/discount/DiscountList";
 
 const Index = () => {
   const { showOceanAnimation } = useOceanAnimation();
+  
+  // Datos de ejemplo para las tarjetas de descuento
+  const discountOffers = [
+    {
+      id: "1",
+      club: "Ushuaïa Ibiza",
+      date: "Hoy",
+      discountPercentage: 25,
+      description: "Entrada general con descuento para la fiesta de David Guetta",
+      code: "USHUAIA25",
+      validUntil: "23:59 hoy"
+    },
+    {
+      id: "2",
+      club: "Amnesia Ibiza",
+      date: "Hoy",
+      discountPercentage: 30,
+      description: "Skip the line y una bebida gratis con tu entrada",
+      code: "AMNESIA30",
+      validUntil: "21:00 hoy"
+    },
+    {
+      id: "3",
+      club: "Pacha Ibiza",
+      date: "Mañana",
+      discountPercentage: 20,
+      description: "Descuento especial para la noche de house music",
+      code: "PACHA20",
+      validUntil: "20:00 mañana"
+    }
+  ];
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0EA5E9] via-[#33C3F0] to-[#0FA0CE]">
@@ -43,6 +75,18 @@ const Index = () => {
           <div className="order-1 lg:order-2">
             <ChatInterface />
           </div>
+        </div>
+
+        {/* Discount Cards Section */}
+        <div className="mt-16">
+          <h2 className="text-3xl font-bold text-white mb-8 flex items-center">
+            <Tag className="mr-2 h-6 w-6" />
+            Descuentos Especiales para Hoy
+            <span className="ml-2 text-sm bg-white text-[#0EA5E9] px-2 py-1 rounded-full">
+              ¡Gira para Descubrir!
+            </span>
+          </h2>
+          <DiscountList discounts={discountOffers} />
         </div>
 
         {/* Features Section with new design */}
