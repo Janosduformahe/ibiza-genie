@@ -11,16 +11,13 @@ const Index = () => {
   const { showOceanAnimation } = useOceanAnimation();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0EA5E9] via-[#33C3F0] to-[#0FA0CE] relative overflow-hidden">
-      {/* Fondo 3D de olas */}
-      <OceanScene isBackground={true} />
-      
+    <div className="min-h-screen bg-gradient-to-br from-[#0EA5E9] via-[#33C3F0] to-[#0FA0CE]">
       <Navigation />
       
-      {/* Ocean Animation Overlay (modal) */}
-      {showOceanAnimation && <OceanScene />}
+      {/* Ocean Animation Overlay */}
+      <OceanScene isVisible={showOceanAnimation} />
       
-      <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
+      <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
           {/* Left Column - Hero Text */}
           <div className="space-y-6 text-white order-2 lg:order-1">
