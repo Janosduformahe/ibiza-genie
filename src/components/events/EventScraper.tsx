@@ -19,7 +19,7 @@ export const EventScraper = ({
     setIsScraperRunning(true);
     toast({
       title: "Event update started",
-      description: "Updating event calendar. This may take a moment."
+      description: "Scraping events from Pacha Ibiza. This may take a moment."
     });
     try {
       console.log("Starting event update process");
@@ -28,9 +28,7 @@ export const EventScraper = ({
         error
       } = await supabase.functions.invoke('scrape-jigsaw', {
         body: {
-          forceFallback: true,
-          // Always use the fallback approach
-          sources: ['clubtickets.com', 'ibiza-spotlight.com']
+          sources: ['pacha.com']
         }
       });
       if (error) {
@@ -45,7 +43,7 @@ export const EventScraper = ({
         if (data.success && data.count > 0) {
           toast({
             title: "Events updated!",
-            description: `Successfully updated ${data.count} events in the calendar.`
+            description: `Successfully updated ${data.count} events from Pacha Ibiza.`
           });
           if (data.results && Array.isArray(data.results)) {
             data.results.forEach(result => {
@@ -87,7 +85,7 @@ export const EventScraper = ({
       className="text-white bg-opacity-20 backdrop-filter backdrop-blur-lg border-white/20 hover:bg-white/20"
     >
       <RefreshCw className={`mr-2 h-4 w-4 ${isScraperRunning ? 'animate-spin' : ''}`} />
-      {isScraperRunning ? 'Updating...' : 'Update Events'}
+      {isScraperRunning ? 'Actualizando...' : 'Actualizar Eventos de Pacha'}
     </Button>
   );
 };
