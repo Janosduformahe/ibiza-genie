@@ -124,10 +124,12 @@ export const ChatInterface = ({
   const handleChangeCharacter = (character: Character) => {
     if (onChangeCharacter) {
       onChangeCharacter(character);
+      
       // Reset messages with the new character's greeting
+      const newCharacterInfo = characterDetails[character];
       setMessages([
         {
-          content: characterDetails[character].greeting,
+          content: newCharacterInfo.greeting,
           isUser: false,
         },
       ]);

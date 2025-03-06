@@ -1,38 +1,32 @@
 
 import { Link } from "react-router-dom";
-import { NavigationMenuItem } from "@/components/ui/navigation-menu";
-import { ShoppingBag, BookOpen, CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, MessageSquare, ShoppingBag } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
-export const NavigationActions = () => {
+export function NavigationActions() {
+  const { t } = useLanguage();
+
   return (
-    <>
-      <NavigationMenuItem>
-        <Link
-          to="/blog"
-          className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-ibiza-azure/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-ibiza-azure/40 hover:text-ibiza-night focus:bg-ibiza-azure/40 focus:text-ibiza-night focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-        >
-          <BookOpen className="mr-2 h-4 w-4" />
-          Blog
+    <div className="ml-auto flex items-center gap-2">
+      <Button asChild variant="ghost" size="icon" className="text-ibiza-night hover:bg-ibiza-sand/50">
+        <Link to="/shop" aria-label={t('common.shop')}>
+          <ShoppingBag className="h-5 w-5" />
         </Link>
-      </NavigationMenuItem>
-      <NavigationMenuItem>
-        <Link
-          to="/calendar"
-          className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-ibiza-azure/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-ibiza-azure/40 hover:text-ibiza-night focus:bg-ibiza-azure/40 focus:text-ibiza-night focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-        >
-          <CalendarDays className="mr-2 h-4 w-4" />
-          Party Calendar
+      </Button>
+      <Button asChild variant="ghost" size="icon" className="text-ibiza-night hover:bg-ibiza-sand/50">
+        <Link to="/calendar" aria-label={t('common.calendar')}>
+          <CalendarDays className="h-5 w-5" />
         </Link>
-      </NavigationMenuItem>
-      <NavigationMenuItem>
-        <Link
-          to="/shop"
-          className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-ibiza-azure/20 px-4 py-2 text-sm font-medium transition-colors hover:bg-ibiza-azure/40 hover:text-ibiza-night focus:bg-ibiza-azure/40 focus:text-ibiza-night focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-        >
-          <ShoppingBag className="mr-2 h-4 w-4" />
-          Shop
+      </Button>
+      <Button asChild variant="ghost" size="icon" className="text-ibiza-night hover:bg-ibiza-sand/50">
+        <Link to="/chat" aria-label={t('common.chat')}>
+          <MessageSquare className="h-5 w-5" />
         </Link>
-      </NavigationMenuItem>
-    </>
+      </Button>
+      
+      <LanguageSelector />
+    </div>
   );
-};
+}
