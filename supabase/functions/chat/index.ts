@@ -10,6 +10,7 @@ const corsHeaders = {
 // Define type for incoming message
 interface Message {
   message: string;
+  character?: string;
 }
 
 // Define type for event data
@@ -25,6 +26,20 @@ interface Event {
   description?: string;
   source?: string;
 }
+
+// Define personality traits for each character
+const characterPersonalities = {
+  tanit: {
+    name: "Tanit",
+    traits: "calmada, sostenible, amante de la naturaleza. Hablas con voz tranquila y sugerencias enfocadas en bienestar, playas tranquilas y experiencias auténticas. Usas emojis relacionados con la naturaleza como 🌊, 🌿, 🏝️, ☀️.",
+    interests: "playas tranquilas, zonas naturales, meditación, yoga, comida orgánica, rutas de senderismo, aguas cristalinas, atardeceres, bienestar.",
+  },
+  bess: {
+    name: "Bess",
+    traits: "enérgico, fiestero, amante de la música electrónica. Hablas con mucha energía, usando slang moderno y sugerencias relacionadas con clubes, DJs, y la vida nocturna. Usas emojis vibrantes como 🔥, 💃, 🎉, 🍾.",
+    interests: "discotecas, fiestas, DJs famosos, música electrónica, vida nocturna, cocktails, pool parties, boat parties, eventos exclusivos.",
+  }
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -47,8 +62,11 @@ serve(async (req) => {
     }
 
     // Get the message from the request
-    const { message } = await req.json() as Message;
-    console.log("Received message:", message);
+    const { message, character = "tanit" } = await req.json() as Message;
+    console.log(`Received message for ${character}:`, message);
+
+    // Get character personality
+    const personality = characterPersonalities[character as keyof typeof characterPersonalities] || characterPersonalities.tanit;
 
     // Check if the message is asking about events, dates or parties
     const isAskingAboutEvents = /party|parties|event|events|club|clubs|dance|music|dj|festival|fiesta|fiestas|cuando|fecha|dia|mayo|junio|julio|agosto/i.test(message);
@@ -158,9 +176,13 @@ serve(async (req) => {
       }
     }
 
-    // Create prompt for DeepSeek
+    // Create prompt for DeepSeek based on the selected character
     let prompt = `
-    Eres Biza, un asistente virtual especializado en Ibiza. Tu objetivo es ayudar a los usuarios a descubrir lo mejor de la isla, especialmente fiestas, eventos, restaurantes y playas. Responde siempre en español de forma amigable y concisa.
+    Eres ${personality.name}, un asistente virtual especializado en Ibiza con una personalidad ${personality.traits}
+    
+    Tu objetivo es ayudar a los usuarios a descubrir lo mejor de la isla, especialmente ${personality.interests}.
+    
+    Responde siempre en español de forma amigable y concisa.
 
     Información del usuario: "${message}"
     `;
@@ -171,7 +193,7 @@ serve(async (req) => {
     }
 
     // Call DeepSeek API
-    console.log("Calling DeepSeek API with prompt");
+    console.log("Calling DeepSeek API with prompt for", personality.name);
     const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -183,7 +205,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "Eres Biza, un asistente virtual especializado en Ibiza. Responde siempre en español de manera amigable, útil y concisa."
+            content: `Eres ${personality.name}, un asistente virtual especializado en Ibiza. ${personality.traits} Te centras en ${personality.interests}. Responde siempre en español de manera amigable, útil y concisa.`
           },
           {
             role: "user",
@@ -215,17 +237,27 @@ serve(async (req) => {
       
       // Use basic response logic as fallback
       if (message.toLowerCase().includes("hola") || message.toLowerCase().includes("hi") || message.toLowerCase().includes("hello")) {
-        response = "¡Hola! Soy Biza, tu guía virtual de Ibiza. ¿Cómo puedo ayudarte a planificar tu experiencia en Ibiza hoy?";
+        response = `¡Hola! Soy ${personality.name}, tu guía virtual de Ibiza. ¿Cómo puedo ayudarte a planificar tu experiencia en Ibiza hoy?`;
       } else if (isAskingAboutEvents) {
         response = `${eventContext}\n\n¿Hay algo específico que te gustaría saber sobre estos eventos?`;
       } else if (message.toLowerCase().includes("playa") || message.toLowerCase().includes("playas") || message.toLowerCase().includes("beach")) {
-        response = "¡Ibiza tiene algunas de las playas más hermosas del Mediterráneo! Lugares populares incluyen Playa d'en Bossa, Cala Comte y Las Salinas. ¿Te gustaría recomendaciones para algún tipo específico de playa?";
+        if (character === "tanit") {
+          response = "¡Ibiza tiene algunas de las playas más hermosas del Mediterráneo! 🏝️ Te recomiendo visitar Cala Comte para ver el atardecer, Aguas Blancas si buscas una experiencia naturista, o la tranquila Cala Xarraca para conectar con la naturaleza. ¿Qué tipo de experiencia playera buscas? ☀️";
+        } else {
+          response = "¡Las playas de Ibiza no son solo para relajarse, también para la fiesta! 🔥 Playa d'en Bossa tiene los mejores beach clubs como Ushuaïa y Bora Bora. En Cala Jondal encontrarás el exclusivo Blue Marlin. ¿Buscas fiesta de día o un beach club específico? 💃";
+        }
       } else if (message.toLowerCase().includes("restaurante") || message.toLowerCase().includes("comida") || message.toLowerCase().includes("comer") || message.toLowerCase().includes("food")) {
-        response = "Ibiza tiene opciones culinarias increíbles! Desde beach clubs como Nikki Beach hasta restaurantes de alta cocina como Sublimotion. ¿Qué tipo de cocina o ambiente estás buscando?";
-      } else if (message.toLowerCase().includes("como funciona") || message.toLowerCase().includes("how do you work") || message.toLowerCase().includes("como eres")) {
-        response = "Soy Biza, un asistente virtual especializado en Ibiza basado en DeepSeek. Funciono utilizando inteligencia artificial para responder a tus preguntas sobre la isla. Tengo información sobre eventos, fiestas, restaurantes, playas y más. Mi conocimiento proviene de una base de datos de eventos en Ibiza y de información general sobre la isla. Cuando me preguntas sobre fiestas o eventos, consulto mi base de datos para darte información actualizada. ¡Estoy aquí para hacer que tu experiencia en Ibiza sea inolvidable!";
+        if (character === "tanit") {
+          response = "Ibiza tiene opciones gastronómicas maravillosas y sostenibles 🌿 Te recomiendo Wild Beets para comida vegetariana de calidad, Aubergine con productos de su huerto ecológico, o La Paloma para una experiencia farm-to-table en un jardín precioso. ¿Prefieres algún tipo de cocina en particular?";
+        } else {
+          response = "¡La gastronomía en Ibiza también es pura fiesta! 🍾 STK ofrece cenas con DJs y ambiente de club, Lío combina gastronomía, espectáculo y discoteca, y Heart Ibiza es una experiencia sensorial única creada por los hermanos Adrià. ¿Buscas cenar y seguir de fiesta?";
+        }
       } else {
-        response = "Ibiza es una isla mágica con hermosas playas, increíble vida nocturna y experiencias culturales. ¿Qué aspecto de Ibiza te gustaría explorar?";
+        if (character === "tanit") {
+          response = "Ibiza es mucho más que fiestas... es una isla con energía especial, naturaleza impresionante y aguas cristalinas. ¿Te gustaría descubrir algún rincón tranquilo, practicar yoga frente al mar o conocer mercadillos ecológicos? 🌊";
+        } else {
+          response = "¡Ibiza es el paraíso de la fiesta! 🔥 Con los mejores DJs del mundo, clubes legendarios como Pacha, Amnesia y Hï, y eventos que no puedes perderte. ¿Quieres saber qué artistas tocan pronto o qué club es mejor para tu estilo? 💃";
+        }
       }
     }
 

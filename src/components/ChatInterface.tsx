@@ -8,6 +8,7 @@ import { ChatInput } from "./ChatInput";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesContainer } from "./MessagesContainer";
 import { useNavigate } from "react-router-dom";
+import { Character, characterDetails } from "@/types/character";
 
 interface Message {
   content: string;
@@ -16,13 +17,21 @@ interface Message {
 
 interface ChatInterfaceProps {
   fullPage?: boolean;
+  selectedCharacter?: Character;
+  onChangeCharacter?: (character: Character) => void;
 }
 
-export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
+export const ChatInterface = ({ 
+  fullPage = false, 
+  selectedCharacter = "tanit",
+  onChangeCharacter
+}: ChatInterfaceProps) => {
   const navigate = useNavigate();
+  const characterInfo = characterDetails[selectedCharacter];
+  
   const [messages, setMessages] = useState<Message[]>([
     {
-      content: "¡Hola! I'm Biza, your Ibiza AI guide. Named after this magical island, I'm here to help you discover the best parties, events, and hidden gems. What would you like to know about our paradise? 🌴✨",
+      content: characterInfo.greeting,
       isUser: false,
     },
   ]);
@@ -42,7 +51,10 @@ export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
       setMessages((prev) => [...prev, { content, isUser: true }]);
 
       const { data, error } = await supabase.functions.invoke('chat', {
-        body: { message: content }
+        body: { 
+          message: content,
+          character: selectedCharacter
+        }
       });
 
       if (error) {
@@ -53,7 +65,7 @@ export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
       setMessages((prev) => [
         ...prev,
         {
-          content: data.response || "Lo siento! I'm having trouble processing your request right now.",
+          content: data.response || `Lo siento! ${characterInfo.name} está teniendo problemas para responder ahora mismo.`,
           isUser: false,
         },
       ]);
@@ -61,7 +73,7 @@ export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
       console.error('Chat error:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: "No se pudo enviar el mensaje. Por favor, intenta de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -72,13 +84,14 @@ export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
   const handleWhatsAppConnect = async () => {
     try {
       if (!phoneNumber.match(/^\+?[1-9]\d{1,14}$/)) {
-        throw new Error("Please enter a valid phone number with country code");
+        throw new Error("Por favor ingresa un número de teléfono válido con código de país");
       }
 
       const { data, error } = await supabase.functions.invoke('whatsapp', {
         body: { 
           message: {
-            phoneNumber: phoneNumber
+            phoneNumber: phoneNumber,
+            character: selectedCharacter
           }
         }
       });
@@ -86,14 +99,14 @@ export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
       if (error) throw error;
 
       toast({
-        title: "WhatsApp Connected!",
-        description: "You'll receive a message from Biza on WhatsApp shortly.",
+        title: "WhatsApp Conectado!",
+        description: `Recibirás un mensaje de ${characterInfo.name} en WhatsApp pronto.`,
       });
     } catch (error) {
       console.error('WhatsApp error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to connect WhatsApp. Please try again.",
+        description: error.message || "Error al conectar WhatsApp. Por favor, intenta de nuevo.",
         variant: "destructive",
       });
     }
@@ -125,16 +138,20 @@ export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
           phoneNumber={phoneNumber}
           setPhoneNumber={setPhoneNumber}
           showCloseButton={!fullPage || isExpanded}
+          selectedCharacter={selectedCharacter}
+          onChangeCharacter={onChangeCharacter}
         />
         <MessagesContainer 
           messages={messages}
           isLoading={isLoading}
           isExpanded={isExpanded || fullPage}
+          selectedCharacter={selectedCharacter}
         />
         <ChatInput 
           onSend={handleSendMessage} 
           disabled={isLoading} 
-          placeholder={isExpanded || fullPage ? "Ask about parties, clubs, or events in Ibiza..." : "Click to start chatting with Biza..."}
+          placeholder={isExpanded || fullPage ? `Pregunta a ${characterInfo.name} sobre ${selectedCharacter === "tanit" ? "playas, naturaleza o bienestar" : "fiestas, clubes o eventos"}...` : `Haz clic para chatear con ${characterInfo.name}...`}
+          selectedCharacter={selectedCharacter}
         />
       </div>
     </Card>

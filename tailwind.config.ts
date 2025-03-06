@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -57,6 +58,22 @@ export default {
           azure: "#2A9D8F",
           sunset: "#E76F51",
           night: "#264653",
+        },
+        // Añadimos colores para Tanit
+        tanit: {
+          primary: "#33C3F0",     // Azul principal
+          secondary: "#0EA5E9",   // Azul secundario
+          accent: "#F5E6D3",      // Arena clara
+          highlight: "#A7E8BD",   // Verde suave
+          light: "#FFFFFF",       // Blanco
+        },
+        // Añadimos colores para Bess
+        bess: {
+          primary: "#EA384C",     // Rojo intenso
+          secondary: "#000000",   // Negro
+          accent: "#F97316",      // Naranja neón
+          highlight: "#D946EF",   // Magenta neón
+          light: "#FFFFFF",       // Blanco
         },
       },
       borderRadius: {
