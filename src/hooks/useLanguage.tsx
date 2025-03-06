@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { translations } from "@/translations";
 
 export type LanguageCode = "en" | "es" | "de" | "nl" | "fr" | "ca" | "pt";
@@ -19,16 +19,23 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguage] = useState<LanguageCode>(() => {
+  const [language, setLanguageState] = useState<LanguageCode>(() => {
     const savedLanguage = localStorage.getItem("language");
     return (savedLanguage as LanguageCode) || defaultLanguage;
   });
 
   useEffect(() => {
     localStorage.setItem("language", language);
+    // Force update on all components that use translations
+    document.documentElement.lang = language;
   }, [language]);
 
-  const t = (key: string): string => {
+  const setLanguage = useCallback((newLanguage: LanguageCode) => {
+    setLanguageState(newLanguage);
+    localStorage.setItem("language", newLanguage);
+  }, []);
+
+  const t = useCallback((key: string): string => {
     const keys = key.split(".");
     let value: any = translations[language];
 
@@ -50,7 +57,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return typeof value === "string" ? value : key;
-  };
+  }, [language]);
 
   const contextValue: LanguageContextType = {
     language,

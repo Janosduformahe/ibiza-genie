@@ -4,8 +4,10 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Navigation } from "@/components/Navigation";
 import { CharacterSelector } from "@/components/CharacterSelector";
 import { Character, characterDetails } from "@/types/character";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Chat = () => {
+  const { t } = useLanguage();
   const [selectedCharacter, setSelectedCharacter] = useState<Character>("tanit");
   const characterInfo = characterDetails[selectedCharacter];
 
@@ -16,7 +18,7 @@ const Chat = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 text-center">
-            Chat con {characterInfo.name} - Tu guía de Ibiza
+            {t(`chat.with${selectedCharacter.charAt(0).toUpperCase() + selectedCharacter.slice(1)}`)} - {t('chat.chooseGuide')}
           </h1>
           
           <CharacterSelector 

@@ -1,12 +1,15 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Product, ProductVariant } from "@/types/product";
 import { ProductList } from "@/components/shop/ProductList";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Shop = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
@@ -16,7 +19,7 @@ const Shop = () => {
       if (error) {
         toast({
           variant: "destructive",
-          title: "Error loading products",
+          title: t('common.error'),
           description: error.message,
         });
         return [];
@@ -40,7 +43,7 @@ const Shop = () => {
       <Navigation />
       <div className="container mx-auto py-12 px-4">
         <h1 className="text-4xl font-bold text-ibiza-night mb-8">
-          Ibiza Collection
+          {t('common.shop')}
         </h1>
         <ProductList products={products || []} isLoading={isLoading} />
       </div>

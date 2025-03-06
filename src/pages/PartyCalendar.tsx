@@ -12,8 +12,10 @@ import { EventNotifications } from "@/components/events/EventNotifications";
 import { EventHighlights } from "@/components/events/EventHighlights";
 import { EventScheduleInfo } from "@/components/events/EventScheduleInfo";
 import { CalendarFooter } from "@/components/events/CalendarFooter";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const PartyCalendar = () => {
+  const { t } = useLanguage();
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined);
   
