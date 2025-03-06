@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,6 +8,7 @@ import { ChatHeader } from "./ChatHeader";
 import { MessagesContainer } from "./MessagesContainer";
 import { useNavigate } from "react-router-dom";
 import { Character, characterDetails } from "@/types/character";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Message {
   content: string;
@@ -27,11 +27,12 @@ export const ChatInterface = ({
   onChangeCharacter
 }: ChatInterfaceProps) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const characterInfo = characterDetails[selectedCharacter];
   
   const [messages, setMessages] = useState<Message[]>([
     {
-      content: characterInfo.greeting,
+      content: t(`characters.${selectedCharacter}.greeting`),
       isUser: false,
     },
   ]);
@@ -65,15 +66,15 @@ export const ChatInterface = ({
       setMessages((prev) => [
         ...prev,
         {
-          content: data.response || `Lo siento! ${characterInfo.name} está teniendo problemas para responder ahora mismo.`,
+          content: data.response || t('chat.errorResponse', { name: characterInfo.name }),
           isUser: false,
         },
       ]);
     } catch (error) {
       console.error('Chat error:', error);
       toast({
-        title: "Error",
-        description: "No se pudo enviar el mensaje. Por favor, intenta de nuevo.",
+        title: t('chat.error'),
+        description: t('chat.errorMessage'),
         variant: "destructive",
       });
     } finally {
@@ -84,7 +85,7 @@ export const ChatInterface = ({
   const handleWhatsAppConnect = async () => {
     try {
       if (!phoneNumber.match(/^\+?[1-9]\d{1,14}$/)) {
-        throw new Error("Por favor ingresa un número de teléfono válido con código de país");
+        throw new Error(t('chat.invalidPhone'));
       }
 
       const { data, error } = await supabase.functions.invoke('whatsapp', {
@@ -99,14 +100,14 @@ export const ChatInterface = ({
       if (error) throw error;
 
       toast({
-        title: "WhatsApp Conectado!",
-        description: `Recibirás un mensaje de ${characterInfo.name} en WhatsApp pronto.`,
+        title: t('chat.whatsappSuccess'),
+        description: t('chat.whatsappMessage', { name: characterInfo.name }),
       });
     } catch (error) {
       console.error('WhatsApp error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Error al conectar WhatsApp. Por favor, intenta de nuevo.",
+        title: t('chat.error'),
+        description: error.message || t('chat.whatsappError'),
         variant: "destructive",
       });
     }
@@ -126,10 +127,9 @@ export const ChatInterface = ({
       onChangeCharacter(character);
       
       // Reset messages with the new character's greeting
-      const newCharacterInfo = characterDetails[character];
       setMessages([
         {
-          content: newCharacterInfo.greeting,
+          content: t(`characters.${character}.greeting`),
           isUser: false,
         },
       ]);
@@ -165,7 +165,7 @@ export const ChatInterface = ({
         <ChatInput 
           onSend={handleSendMessage} 
           disabled={isLoading} 
-          placeholder={isExpanded || fullPage ? `Pregunta a ${characterInfo.name} sobre ${selectedCharacter === "tanit" ? "playas, naturaleza o bienestar" : "fiestas, clubes o eventos"}...` : `Haz clic para chatear con ${characterInfo.name}...`}
+          placeholder={isExpanded || fullPage ? t(`chat.askAbout${selectedCharacter === "tanit" ? "Nature" : "Parties"}`) : t('chat.clickToChat', { name: characterInfo.name })}
           selectedCharacter={selectedCharacter}
         />
       </div>

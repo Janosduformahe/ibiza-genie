@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     common: {
@@ -11,13 +10,14 @@ export const translations = {
       register: "Register",
       search: "Search",
       language: "Language",
+      error: "Error",
     },
     chat: {
       withTanit: "Chat with Tanit",
       withBess: "Chat with Bess",
       askAboutNature: "Ask about beaches, nature or wellness",
       askAboutParties: "Ask about parties, clubs or events",
-      clickToChat: "Click to chat",
+      clickToChat: "Click to chat with {name}",
       sendMessage: "Send",
       whatsappConnect: "Connect with WhatsApp",
       phoneNumberPlaceholder: "+34612345678",
@@ -26,10 +26,14 @@ export const translations = {
       close: "Close",
       error: "Error",
       errorMessage: "Could not send the message. Please try again.",
+      errorResponse: "Sorry! {name} is having trouble responding right now.",
       whatsappSuccess: "WhatsApp Connected!",
       whatsappMessage: "You will receive a message from {name} on WhatsApp soon.",
+      whatsappError: "Error connecting WhatsApp. Please try again.",
+      invalidPhone: "Please enter a valid phone number with country code",
       chooseGuide: "Choose your Ibiza guide",
       eachDeity: "Each deity will show you a different side of the island",
+      active: "Active",
     },
     home: {
       heroTitle: "Your AI Guide to Ibiza's Best Experiences",
@@ -71,13 +75,14 @@ export const translations = {
       register: "Registrarse",
       search: "Buscar",
       language: "Idioma",
+      error: "Error",
     },
     chat: {
       withTanit: "Chat con Tanit",
       withBess: "Chat con Bess",
       askAboutNature: "Pregunta sobre playas, naturaleza o bienestar",
       askAboutParties: "Pregunta sobre fiestas, clubes o eventos",
-      clickToChat: "Haz clic para chatear",
+      clickToChat: "Haz clic para chatear con {name}",
       sendMessage: "Enviar",
       whatsappConnect: "Conectar con WhatsApp",
       phoneNumberPlaceholder: "+34612345678",
@@ -86,10 +91,14 @@ export const translations = {
       close: "Cerrar",
       error: "Error",
       errorMessage: "No se pudo enviar el mensaje. Por favor, intenta de nuevo.",
+      errorResponse: "¡Lo siento! {name} está teniendo problemas para responder ahora mismo.",
       whatsappSuccess: "WhatsApp Conectado!",
       whatsappMessage: "Recibirás un mensaje de {name} en WhatsApp pronto.",
+      whatsappError: "Error al conectar WhatsApp. Por favor, intenta de nuevo.",
+      invalidPhone: "Por favor ingresa un número de teléfono válido con código de país",
       chooseGuide: "Elige tu guía de Ibiza",
       eachDeity: "Cada deidad te mostrará un lado diferente de la isla",
+      active: "Activo",
     },
     home: {
       heroTitle: "Tu Guía de IA para las Mejores Experiencias en Ibiza",
@@ -132,7 +141,57 @@ export const translations = {
       search: "Suchen",
       language: "Sprache",
     },
-    // ... add German translations for other sections
+    chat: {
+      withTanit: "Chat mit Tanit",
+      withBess: "Chat mit Bess",
+      askAboutNature: "Frage nach Strand, Natur oder Wellness",
+      askAboutParties: "Frage nach Partys, Clubs oder Veranstaltungen",
+      clickToChat: "Klicke, um zu chatten",
+      sendMessage: "Senden",
+      whatsappConnect: "Verbinde mit WhatsApp",
+      phoneNumberPlaceholder: "+34612345678",
+      connectButton: "Verbinden",
+      changeCharacter: "Ändern zu",
+      close: "Schließen",
+      error: "Fehler",
+      errorMessage: "Kann die Nachricht nicht senden. Bitte versuche es erneut.",
+      errorResponse: "Entschuldigung! {name} hat gerade Probleme mit der Antwort.",
+      whatsappSuccess: "WhatsApp verbunden!",
+      whatsappMessage: "Du wirst von {name} eine Nachricht auf WhatsApp erhalten.",
+      whatsappError: "Fehler beim Verbinden von WhatsApp. Bitte versuche es erneut.",
+      invalidPhone: "Bitte gib einen gültigen Telefonnummer mit Landescode ein",
+      chooseGuide: "Wähle deine Ibiza-Guide",
+      eachDeity: "Jede Deidad zeigt dir einen anderen Aspekt der Insel",
+      active: "Aktiv",
+    },
+    home: {
+      heroTitle: "Deine AI-Guide zu den Besten Erfahrungen in Ibiza",
+      heroSubtitle: "Erhalte sofortige Empfehlungen für Partys, Clubs und Veranstaltungen von unserem AI-gestützten Assistenten.",
+      chatButton: "Chat mit Biza",
+      eventsButton: "Sei Events",
+      discountsTitle: "Spezielle Rabatte für Heute",
+      spinToDiscover: "Spinne, um zu Entdecken!",
+      features: {
+        merch: "Einschließlich Merchandising",
+        merchDesc: "Kaufe unsere ausgewählte Sammlung von Ibiza-Inspireten Merch",
+        blog: "Insider-Blog",
+        blogDesc: "Lese Expertentips und Geschichten zu den besten Erfahrungen auf der Insel",
+        updates: "In-Time-Updates",
+        updatesDesc: "Stelle dich auf den Lauf der Zeit mit den neuesten Veranstaltungen und Partys-Announcements informiert",
+      },
+    },
+    characters: {
+      tanit: {
+        name: "Tanit",
+        description: "Phoenizische Göttin von Ibiza, Liebhaberin der Natur, des Meeres und der Gesundheit.",
+        greeting: "Hallo! Ich bin Tanit 🌊, die Göttin von Ibiza. Meine Spezialität ist die natürliche Schönheit der Insel, die Tranquillität des Meeres und die Wellnessraum. Wie kann ich dir bei deiner Besichtigung unserer schönen Insel helfen?"
+      },
+      bess: {
+        name: "Bess",
+        description: "Ägyptischer Gott der Musik und der Party, Liebhaber des Hedonismus und der Nachtleben.",
+        greeting: "Hey! Ich bin Bess 🔥, der Gott der Party. Ich weiß alles über die Clubs, Partys und die beste Nachtleben in Ibiza. Bereit für wunderbare Erfahrungen? Frag mich alles!"
+      }
+    }
   },
   nl: {
     common: {
@@ -146,7 +205,57 @@ export const translations = {
       search: "Zoeken",
       language: "Taal",
     },
-    // ... add Dutch translations for other sections
+    chat: {
+      withTanit: "Chat met Tanit",
+      withBess: "Chat met Bess",
+      askAboutNature: "Vraag over stranden, natuur of gezondheid",
+      askAboutParties: "Vraag over partys, clubs of evenementen",
+      clickToChat: "Klik om te chatten met {name}",
+      sendMessage: "Verstuur",
+      whatsappConnect: "Verbind met WhatsApp",
+      phoneNumberPlaceholder: "+34612345678",
+      connectButton: "Verbinden",
+      changeCharacter: "Verander naar",
+      close: "Sluiten",
+      error: "Fout",
+      errorMessage: "Kan de bericht niet versturen. Probeer opnieuw.",
+      errorResponse: "Sorry! {name} heeft momenteel problemen met het antwoorden.",
+      whatsappSuccess: "WhatsApp verbonden!",
+      whatsappMessage: "Je zult een bericht van {name} ontvangen op WhatsApp snel.",
+      whatsappError: "Fout bij verbinden van WhatsApp. Probeer opnieuw.",
+      invalidPhone: "Vul een geldig telefoonnummer met landcode in",
+      chooseGuide: "Kies je Ibiza-guide",
+      eachDeity: "Elke diade zal je een andere kant van de oceaan tonen",
+      active: "Actief",
+    },
+    home: {
+      heroTitle: "Je AI-Guide voor de beste ervaringen in Ibiza",
+      heroSubtitle: "Krijg directe aanbevelingen voor partys, clubs en evenementen van onze AI-gestuurde assistent.",
+      chatButton: "Chat met Biza",
+      eventsButton: "Bekijk Evenementen",
+      discountsTitle: "Speciale kortingen vandaag",
+      spinToDiscover: "Spin om te ontdekken!",
+      features: {
+        merch: "Exclusief Merchandising",
+        merchDesc: "Koop onze geselecteerde collectie van Ibiza-inspired merchandise",
+        blog: "Insider-Blog",
+        blogDesc: "Lees experttips en verhalen over de beste ervaringen op de oceaan",
+        updates: "In-time Updates",
+        updatesDesc: "Sta op de hoogte van de laatste evenementen en partys-announcements",
+      },
+    },
+    characters: {
+      tanit: {
+        name: "Tanit",
+        description: "Phoenizische diode van Ibiza, liefhebber van de natuur, het zee en de gezondheid.",
+        greeting: "Hallo! Ik ben Tanit 🌊, de diode van Ibiza. Mijn spesialeheid is de natuurlijke schoonheid van de oceaan, de tranquilliteit van het zee en de wellnessruimten. Hoe kan ik je helpen bij je bezoek aan onze mooie oceaan?"
+      },
+      bess: {
+        name: "Bess",
+        description: "Egyptische diod van muziek en partys, liefhebber van hedonisme en nachtliv.",
+        greeting: "Hey! Ik ben Bess 🔥, de diod van partys. Ik weet alles over de clubs, partys en de beste nachtliv in Ibiza. Bereid voor wunderbare ervaringen? Vraag alles!"
+      }
+    }
   },
   fr: {
     common: {
@@ -160,7 +269,57 @@ export const translations = {
       search: "Rechercher",
       language: "Langue",
     },
-    // ... add French translations for other sections
+    chat: {
+      withTanit: "Chat avec Tanit",
+      withBess: "Chat avec Bess",
+      askAboutNature: "Posez des questions sur les plages, la nature ou la santé",
+      askAboutParties: "Posez des questions sur les parties, les clubs ou les événements",
+      clickToChat: "Cliquez pour chatter avec {name}",
+      sendMessage: "Envoyer",
+      whatsappConnect: "Connectez-vous à WhatsApp",
+      phoneNumberPlaceholder: "+34612345678",
+      connectButton: "Connecter",
+      changeCharacter: "Changer en",
+      close: "Fermer",
+      error: "Erreur",
+      errorMessage: "Impossible d'envoyer le message. Veuillez réessayer.",
+      errorResponse: "Désolé! {name} a des problèmes pour répondre actuellement.",
+      whatsappSuccess: "WhatsApp connecté!",
+      whatsappMessage: "Vous recevrez un message de {name} sur WhatsApp bientôt.",
+      whatsappError: "Erreur de connexion à WhatsApp. Veuillez réessayer.",
+      invalidPhone: "Veuillez entrer un numéro de téléphone valide avec le code pays",
+      chooseGuide: "Choisissez votre guide d'Ibiza",
+      eachDeity: "Chaque déité vous montrera une autre partie de l'île",
+      active: "Actif",
+    },
+    home: {
+      heroTitle: "Votre Guide IA pour les meilleures Expériences en Ibiza",
+      heroSubtitle: "Obtenez des recommandations instantanées pour les parties, les clubs et les événements de notre assistant IA.",
+      chatButton: "Chat avec Biza",
+      eventsButton: "Voir les Événements",
+      discountsTitle: "Des Réductions Spéciales Aujourd'hui",
+      spinToDiscover: "Gardez Spin pour Découvrir!",
+      features: {
+        merch: "Merchandising Exclusif",
+        merchDesc: "Achetez notre collection curée de produits inspirés d'Ibiza",
+        blog: "Blog de l'Insider",
+        blogDesc: "Lisez des conseils d'experts et des histoires sur les meilleures expériences de l'île",
+        updates: "Mises à Jour en temps réel",
+        updatesDesc: "Restez informé des derniers événements et annonces de parties",
+      },
+    },
+    characters: {
+      tanit: {
+        name: "Tanit",
+        description: "Déesse phénicienne d'Ibiza, amante de la nature, du mer et de la santé.",
+        greeting: "Bonjour! Je suis Tanit 🌊, la déesse d'Ibiza. Ma spécialité est la beauté naturelle de l'île, la tranquillité du mer et les espaces de bien-être. Comment puis-je vous aider lors de votre visite à notre belle île?"
+      },
+      bess: {
+        name: "Bess",
+        description: "Déesse égyptienne de la musique et de la fête, amante du hedonisme et de la nuit.",
+        greeting: "Hey! Je suis Bess 🔥, la déesse de la fête. Je sais tout sur les clubs, les fêtes et la meilleure nuit de Ibiza. Prêt pour des expériences incroyables? Posez-moi toutes vos questions!"
+      }
+    }
   },
   ca: {
     common: {
@@ -173,8 +332,59 @@ export const translations = {
       register: "Registrar-se",
       search: "Cercar",
       language: "Idioma",
+      error: "Error",
     },
-    // ... add Catalan translations for other sections
+    chat: {
+      withTanit: "Xat amb Tanit",
+      withBess: "Xat amb Bess",
+      askAboutNature: "Poseu-vos en quèlques pregunta sobre les plaques, la natura o la salut",
+      askAboutParties: "Poseu-vos en quèlques pregunta sobre les parties, els clubs o els esdeveniments",
+      clickToChat: "Feu clic per a xatar amb {name}",
+      sendMessage: "Enviar",
+      whatsappConnect: "Connecteu-vos amb WhatsApp",
+      phoneNumberPlaceholder: "+34612345678",
+      connectButton: "Connectar",
+      changeCharacter: "Canviar a",
+      close: "Tancar",
+      error: "Error",
+      errorMessage: "No s'ha pogut enviar el missatge. Proveu-ho de nou.",
+      errorResponse: "S'ha produït un error. {name} no pot respondre ara.",
+      whatsappSuccess: "WhatsApp connectat!",
+      whatsappMessage: "Rebreu un missatge de {name} per WhatsApp en breu.",
+      whatsappError: "Error de connexió amb WhatsApp. Proveu-ho de nou.",
+      invalidPhone: "Introduïu un número de telèfon vàlid amb codi de païs",
+      chooseGuide: "Trieu la vostra guia d'Ibiza",
+      eachDeity: "Cada deidad vostè mostrarà una altra part de l'ílla",
+      active: "Actiu",
+    },
+    home: {
+      heroTitle: "El Vostre Guia IA per les Millors Experiències en Ibiza",
+      heroSubtitle: "Obtenez recomanacions immediates per a parties, clubs i esdeveniments de nostre assistent IA.",
+      chatButton: "Xatar amb Biza",
+      eventsButton: "Veure Esdeveniments",
+      discountsTitle: "Descomptes Especials Ara",
+      spinToDiscover: "Gireu per Descobrir!",
+      features: {
+        merch: "Merchandising Exclusiu",
+        merchDesc: "Compra la nostra col·lecció curada de productes inspirats en Ibiza",
+        blog: "Blog de l'Insider",
+        blogDesc: "Llegeix consejos d'experts i històries sobre les millors experiències de l'ílla",
+        updates: "Actualitzacions en temps real",
+        updatesDesc: "Estàt informat de les últimes esdeveniments i anuncis de parties",
+      },
+    },
+    characters: {
+      tanit: {
+        name: "Tanit",
+        description: "Diosa fenícia d'Ibiza, amante de la natura, del mar i de la salut.",
+        greeting: "Hola! És Tanit 🌊, la diosa d'Ibiza. La meva especialitat és la belleza natural de l'ílla, la tranquillitat del mar i els espais de salut. Quina puc ajudar-te durant la teva visita a la nostra bel·la ílla?"
+      },
+      bess: {
+        name: "Bess",
+        description: "Dios egipci de la música i la festa, amante del hedonisme i de la vida nocturna.",
+        greeting: "Hey! És Bess 🔥, el dios de la festa. Conozco tots els clubs, festes i la millor vida nocturna d'Ibiza. Pront per vivir experiències increïbles? Poseu-vos en quèlques pregunta!"
+      }
+    }
   },
   pt: {
     common: {
@@ -187,7 +397,58 @@ export const translations = {
       register: "Registrar",
       search: "Pesquisar",
       language: "Idioma",
+      error: "Erro",
     },
-    // ... add Portuguese translations for other sections
+    chat: {
+      withTanit: "Chat com Tanit",
+      withBess: "Chat com Bess",
+      askAboutNature: "Pergunte sobre praias, natureza ou bem-estar",
+      askAboutParties: "Pergunte sobre festas, clubes ou eventos",
+      clickToChat: "Clique para chatear com {name}",
+      sendMessage: "Enviar",
+      whatsappConnect: "Conecte-se com WhatsApp",
+      phoneNumberPlaceholder: "+34612345678",
+      connectButton: "Conectar",
+      changeCharacter: "Mudar para",
+      close: "Fechar",
+      error: "Erro",
+      errorMessage: "Não foi possível enviar o mensagem. Por favor, tente novamente.",
+      errorResponse: "Desculpe! {name} está tendo problemas para responder agora mesmo.",
+      whatsappSuccess: "WhatsApp conectado!",
+      whatsappMessage: "Você receberá uma mensagem de {name} no WhatsApp em breve.",
+      whatsappError: "Erro ao conectar WhatsApp. Por favor, tente novamente.",
+      invalidPhone: "Por favor, insira um número de telefone válido com código de país",
+      chooseGuide: "Escolha sua guia de Ibiza",
+      eachDeity: "Cada deidade mostrará para você uma outra parte da ilha",
+      active: "Ativo",
+    },
+    home: {
+      heroTitle: "Sua Guia IA para as Melhores Experiências em Ibiza",
+      heroSubtitle: "Obtenha recomendações instantâneas para festas, clubes e eventos de nosso assistente IA.",
+      chatButton: "Chat com Biza",
+      eventsButton: "Ver Eventos",
+      discountsTitle: "Descontos Especiais Hoje",
+      spinToDiscover: "Gire para Descobrir!",
+      features: {
+        merch: "Merchandising Exclusivo",
+        merchDesc: "Compre nossa coleção curada de produtos inspirados em Ibiza",
+        blog: "Blog de Insider",
+        blogDesc: "Leia dicas de especialistas e histórias sobre as melhores experiências da ilha",
+        updates: "Atualizações em Tempo Real",
+        updatesDesc: "Está sempre atualizado sobre os últimos eventos e anúncios de festas",
+      },
+    },
+    characters: {
+      tanit: {
+        name: "Tanit",
+        description: "Diosa fenícia de Ibiza, amante de natureza, mar e bem-estar.",
+        greeting: "Olá! Sou Tanit 🌊, a diosa de Ibiza. Minha especialidade é a beleza natural da ilha, a tranquilidade do mar e os espaços de bem-estar. Como posso ajudar você durante sua visita à nossa bela ilha?"
+      },
+      bess: {
+        name: "Bess",
+        description: "Dios egipcio de música e festa, amante de hedonismo e vida noturna.",
+        greeting: "Hey! Sou Bess 🔥, o dios de festa. Conheço todos os clubes, festas e a melhor vida noturna de Ibiza. Pronto para viver experiências incríveis? Pergunte tudo que quiser!"
+      }
+    }
   }
 };
