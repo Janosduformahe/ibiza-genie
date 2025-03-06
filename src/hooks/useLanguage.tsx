@@ -7,7 +7,7 @@ export type LanguageCode = "en" | "es" | "de" | "nl" | "fr" | "ca" | "pt";
 interface LanguageContextType {
   language: LanguageCode;
   setLanguage: (language: LanguageCode) => void;
-  t: (key: string, params?: Record<string, string>) => string;
+  t: (key: string) => string;
 }
 
 const defaultLanguage: LanguageCode = "en";
@@ -35,7 +35,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("language", newLanguage);
   }, []);
 
-  const t = useCallback((key: string, params?: Record<string, string>): string => {
+  const t = useCallback((key: string): string => {
     const keys = key.split(".");
     let value: any = translations[language];
 
@@ -56,16 +56,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    let result = typeof value === "string" ? value : key;
-    
-    // Replace parameters in the string if they exist
-    if (params && typeof result === "string") {
-      Object.entries(params).forEach(([paramKey, paramValue]) => {
-        result = result.replace(`{${paramKey}}`, paramValue);
-      });
-    }
-    
-    return result;
+    return typeof value === "string" ? value : key;
   }, [language]);
 
   const contextValue: LanguageContextType = {
