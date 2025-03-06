@@ -9,9 +9,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import type { LanguageCode } from "@/hooks/useLanguage";
 
 interface LanguageOption {
-  code: string;
+  code: LanguageCode;
   name: string;
   nativeName: string;
 }
