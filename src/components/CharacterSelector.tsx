@@ -2,7 +2,7 @@
 import React from "react";
 import { Sun, Palmtree, Music, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Character } from "@/types/character";
+import { Character, characterDetails } from "@/types/character";
 
 interface CharacterSelectorProps {
   selectedCharacter: Character;
@@ -14,19 +14,29 @@ export const CharacterSelector = ({ selectedCharacter, onSelectCharacter }: Char
     <div className="flex flex-col md:flex-row justify-center gap-4 mb-8">
       <Button
         onClick={() => onSelectCharacter("tanit")}
-        className={`relative flex-1 px-6 py-8 ${
+        className={`relative overflow-hidden h-auto p-0 ${
           selectedCharacter === "tanit"
-            ? "bg-gradient-to-r from-tanit-secondary to-tanit-primary text-white border-2 border-white"
-            : "bg-white/20 text-white hover:bg-tanit-secondary/70"
+            ? "border-2 border-white shadow-lg" 
+            : "border border-white/20 hover:border-tanit-primary/70"
         } rounded-lg transition-all duration-300`}
       >
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Sun className="h-6 w-6" />
-            <Palmtree className="h-6 w-6" />
+        <div className="w-full h-full">
+          <div className="relative">
+            <img 
+              src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800" 
+              alt="Tanit, diosa de la naturaleza" 
+              className="w-full object-cover aspect-[4/3]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-tanit-primary/90 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 p-4 text-left">
+              <h3 className="font-bold text-2xl text-white">Tanit</h3>
+              <p className="text-sm text-white/90 max-w-xs">Diosa fenicia de Ibiza, amante de la naturaleza, el mar y el bienestar.</p>
+              <div className="flex mt-2 gap-1">
+                <Sun className="h-5 w-5 text-white" />
+                <Palmtree className="h-5 w-5 text-white" />
+              </div>
+            </div>
           </div>
-          <div className="text-xl font-bold">Tanit</div>
-          <div className="text-sm opacity-80">Naturaleza, mar y bienestar</div>
         </div>
         {selectedCharacter === "tanit" && (
           <div className="absolute top-2 right-2 bg-white text-tanit-primary text-xs px-2 py-1 rounded-full">
@@ -37,19 +47,29 @@ export const CharacterSelector = ({ selectedCharacter, onSelectCharacter }: Char
 
       <Button
         onClick={() => onSelectCharacter("bess")}
-        className={`relative flex-1 px-6 py-8 ${
+        className={`relative overflow-hidden h-auto p-0 ${
           selectedCharacter === "bess"
-            ? "bg-gradient-to-r from-bess-primary to-bess-secondary text-white border-2 border-bess-accent"
-            : "bg-white/20 text-white hover:bg-bess-primary/70"
+            ? "border-2 border-white shadow-lg" 
+            : "border border-white/20 hover:border-bess-primary/70"
         } rounded-lg transition-all duration-300`}
       >
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Music className="h-6 w-6" />
-            <Flame className="h-6 w-6" />
+        <div className="w-full h-full">
+          <div className="relative">
+            <img 
+              src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800" 
+              alt="Bess, dios de la fiesta" 
+              className="w-full object-cover aspect-[4/3]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-bess-primary/90 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 p-4 text-left">
+              <h3 className="font-bold text-2xl text-white">Bess</h3>
+              <p className="text-sm text-white/90 max-w-xs">Dios egipcio de la música y la fiesta, amante del hedonismo y la vida nocturna.</p>
+              <div className="flex mt-2 gap-1">
+                <Music className="h-5 w-5 text-white" />
+                <Flame className="h-5 w-5 text-white" />
+              </div>
+            </div>
           </div>
-          <div className="text-xl font-bold">Bess</div>
-          <div className="text-sm opacity-80">Fiesta y hedonismo</div>
         </div>
         {selectedCharacter === "bess" && (
           <div className="absolute top-2 right-2 bg-white text-bess-primary text-xs px-2 py-1 rounded-full">

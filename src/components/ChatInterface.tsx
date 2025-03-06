@@ -121,6 +121,19 @@ export const ChatInterface = ({
     }
   };
 
+  const handleChangeCharacter = (character: Character) => {
+    if (onChangeCharacter) {
+      onChangeCharacter(character);
+      // Reset messages with the new character's greeting
+      setMessages([
+        {
+          content: characterDetails[character].greeting,
+          isUser: false,
+        },
+      ]);
+    }
+  };
+
   return (
     <Card 
       className={cn(
@@ -139,7 +152,7 @@ export const ChatInterface = ({
           setPhoneNumber={setPhoneNumber}
           showCloseButton={!fullPage || isExpanded}
           selectedCharacter={selectedCharacter}
-          onChangeCharacter={onChangeCharacter}
+          onChangeCharacter={handleChangeCharacter}
         />
         <MessagesContainer 
           messages={messages}
