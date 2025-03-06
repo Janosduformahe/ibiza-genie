@@ -3,14 +3,10 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ShoppingBag, BookOpen, Tag } from "lucide-react";
-import OceanScene from "@/components/animations/OceanScene";
-import { useOceanAnimation } from "@/hooks/useOceanAnimation";
+import { ShoppingBag, BookOpen, Tag, MessageSquare } from "lucide-react";
 import { DiscountList } from "@/components/discount/DiscountList";
 
 const Index = () => {
-  const { showOceanAnimation } = useOceanAnimation();
-  
   // Datos de ejemplo para las tarjetas de descuento
   const discountOffers = [
     {
@@ -46,9 +42,6 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#0EA5E9] via-[#33C3F0] to-[#0FA0CE]">
       <Navigation />
       
-      {/* Ocean Animation Overlay */}
-      <OceanScene isVisible={showOceanAnimation} />
-      
       <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
           {/* Left Column - Hero Text */}
@@ -62,18 +55,31 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button asChild size="lg" 
                 className="bg-white text-[#0EA5E9] hover:bg-white/90 transition-all">
-                <Link to="/shop">Visit Shop</Link>
+                <Link to="/chat">Chat with Biza</Link>
               </Button>
               <Button asChild size="lg" variant="outline" 
                 className="border-white text-white hover:bg-white/10">
-                <Link to="/blog">Read Blog</Link>
+                <Link to="/calendar">See Events</Link>
               </Button>
             </div>
           </div>
 
-          {/* Right Column - Chat Interface */}
-          <div className="order-1 lg:order-2">
-            <ChatInterface />
+          {/* Right Column - Chat Preview */}
+          <div className="order-1 lg:order-2 relative">
+            <div className="chat-preview-container relative">
+              <div className="chat-preview-overlay absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 rounded-xl pointer-events-none z-10"></div>
+              
+              <ChatInterface />
+              
+              <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center">
+                <Button asChild size="lg" className="bg-white text-[#0EA5E9] hover:bg-white/90">
+                  <Link to="/chat" className="flex items-center space-x-2">
+                    <MessageSquare className="w-5 h-5" />
+                    <span>Open Full Chat</span>
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 

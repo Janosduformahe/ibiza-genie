@@ -1,3 +1,4 @@
+
 import { Sun, Palmtree, Waves, Sunset, MessageCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -16,6 +17,7 @@ interface ChatHeaderProps {
   onWhatsAppConnect: () => void;
   phoneNumber: string;
   setPhoneNumber: (value: string) => void;
+  showCloseButton?: boolean;
 }
 
 export const ChatHeader = ({
@@ -24,6 +26,7 @@ export const ChatHeader = ({
   onWhatsAppConnect,
   phoneNumber,
   setPhoneNumber,
+  showCloseButton = true,
 }: ChatHeaderProps) => {
   return (
     <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-ibiza-azure to-ibiza-night">
@@ -36,14 +39,16 @@ export const ChatHeader = ({
       </div>
       {isExpanded && (
         <>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:bg-white/20"
-            onClick={onClose}
-          >
-            ✕
-          </Button>
+          {showCloseButton && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:bg-white/20"
+              onClick={onClose}
+            >
+              ✕
+            </Button>
+          )}
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -6,13 +7,19 @@ import { cn } from "@/lib/utils";
 import { ChatInput } from "./ChatInput";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesContainer } from "./MessagesContainer";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   content: string;
   isUser: boolean;
 }
 
-export const ChatInterface = () => {
+interface ChatInterfaceProps {
+  fullPage?: boolean;
+}
+
+export const ChatInterface = ({ fullPage = false }: ChatInterfaceProps) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       content: "¡Hola! I'm Biza, your Ibiza AI guide. Named after this magical island, I'm here to help you discover the best parties, events, and hidden gems. What would you like to know about our paradise? 🌴✨",
@@ -21,11 +28,11 @@ export const ChatInterface = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(fullPage);
   const { toast } = useToast();
 
   const handleSendMessage = async (content: string) => {
-    if (!isExpanded) {
+    if (!isExpanded && !fullPage) {
       setIsExpanded(true);
       return;
     }
@@ -94,34 +101,40 @@ export const ChatInterface = () => {
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsExpanded(false);
+    if (fullPage) {
+      navigate('/');
+    } else {
+      setIsExpanded(false);
+    }
   };
 
   return (
     <Card 
       className={cn(
         "chat-container glass-card transition-all duration-500 ease-in-out",
-        isExpanded ? "fixed inset-0 m-0 rounded-none z-50 min-h-screen" : "max-w-2xl mx-auto"
+        fullPage ? "w-full h-[calc(100vh-200px)] min-h-[600px] !m-0" : 
+          isExpanded ? "fixed inset-0 m-0 rounded-none z-50 min-h-screen" : "max-w-2xl mx-auto"
       )}
-      onClick={() => !isExpanded && setIsExpanded(true)}
+      onClick={() => !isExpanded && !fullPage && setIsExpanded(true)}
     >
       <div className="flex flex-col h-full">
         <ChatHeader 
-          isExpanded={isExpanded}
+          isExpanded={isExpanded || fullPage}
           onClose={handleClose}
           onWhatsAppConnect={handleWhatsAppConnect}
           phoneNumber={phoneNumber}
           setPhoneNumber={setPhoneNumber}
+          showCloseButton={!fullPage || isExpanded}
         />
         <MessagesContainer 
           messages={messages}
           isLoading={isLoading}
-          isExpanded={isExpanded}
+          isExpanded={isExpanded || fullPage}
         />
         <ChatInput 
           onSend={handleSendMessage} 
           disabled={isLoading} 
-          placeholder={isExpanded ? "Ask about parties, clubs, or events in Ibiza..." : "Click to start chatting with Biza..."}
+          placeholder={isExpanded || fullPage ? "Ask about parties, clubs, or events in Ibiza..." : "Click to start chatting with Biza..."}
         />
       </div>
     </Card>
