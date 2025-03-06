@@ -1,21 +1,8 @@
-
-import { 
-  Sun, Palmtree, Waves, Leaf, 
-  Music, Flame, Sparkles, PartyPopper, 
-  MessageCircle 
-} from "lucide-react";
+import { Sun, Palmtree, Waves, Leaf, Music, Flame, Sparkles, PartyPopper, MessageCircle } from "lucide-react";
 import { Button } from "./ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "./ui/input";
 import { Character, characterDetails } from "@/types/character";
-
 interface ChatHeaderProps {
   isExpanded: boolean;
   onClose: (e: React.MouseEvent) => void;
@@ -26,7 +13,6 @@ interface ChatHeaderProps {
   selectedCharacter: Character;
   onChangeCharacter?: (character: Character) => void;
 }
-
 export const ChatHeader = ({
   isExpanded,
   onClose,
@@ -35,10 +21,9 @@ export const ChatHeader = ({
   setPhoneNumber,
   showCloseButton = true,
   selectedCharacter,
-  onChangeCharacter,
+  onChangeCharacter
 }: ChatHeaderProps) => {
   const characterInfo = characterDetails[selectedCharacter];
-  
   const renderIcon = (iconName: string, index: number) => {
     const icons = {
       sun: <Sun key={index} className="h-6 w-6 text-white animate-pulse" />,
@@ -48,46 +33,22 @@ export const ChatHeader = ({
       music: <Music key={index} className="h-6 w-6 text-white animate-pulse" />,
       flame: <Flame key={index} className="h-6 w-6 text-white animate-bounce" />,
       sparkles: <Sparkles key={index} className="h-6 w-6 text-white animate-pulse" />,
-      "party-popper": <PartyPopper key={index} className="h-6 w-6 text-white animate-bounce" />,
+      "party-popper": <PartyPopper key={index} className="h-6 w-6 text-white animate-bounce" />
     };
-    
     return icons[iconName] || <Sun key={index} className="h-6 w-6 text-white" />;
   };
-
-  return (
-    <div className={`flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r ${
-      selectedCharacter === "tanit" 
-        ? "from-tanit-primary to-tanit-secondary" 
-        : "from-bess-primary to-bess-secondary"
-    }`}>
+  return <div className={`flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r ${selectedCharacter === "tanit" ? "from-tanit-primary to-tanit-secondary" : "from-bess-primary to-bess-secondary"}`}>
       <div className="flex items-center space-x-2">
         {characterInfo.icons.map((icon, index) => renderIcon(icon, index))}
         <h2 className="text-lg font-semibold text-white">Chat con {characterInfo.name}</h2>
       </div>
       
-      {isExpanded && (
-        <>
-          {onChangeCharacter && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-white hover:bg-white/20 mr-2"
-              onClick={() => onChangeCharacter(selectedCharacter === "tanit" ? "bess" : "tanit")}
-            >
-              Cambiar a {selectedCharacter === "tanit" ? "Bess" : "Tanit"}
-            </Button>
-          )}
+      {isExpanded && <>
+          {onChangeCharacter}
           
-          {showCloseButton && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-white hover:bg-white/20"
-              onClick={onClose}
-            >
+          {showCloseButton && <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={onClose}>
               ✕
-            </Button>
-          )}
+            </Button>}
           
           <Dialog>
             <DialogTrigger asChild>
@@ -103,19 +64,13 @@ export const ChatHeader = ({
                 </DialogDescription>
               </DialogHeader>
               <div className="flex items-center space-x-2">
-                <Input
-                  placeholder="+34612345678"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
+                <Input placeholder="+34612345678" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} />
                 <Button onClick={onWhatsAppConnect}>
                   Conectar
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
-        </>
-      )}
-    </div>
-  );
+        </>}
+    </div>;
 };
