@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -60,12 +59,11 @@
 }
 
 .glass-card {
-  @apply backdrop-blur-md bg-white/20 border border-white/30 shadow-lg;
+  @apply backdrop-blur-md bg-white/30 border border-white/30 shadow-lg;
 }
 
 .chat-container {
-  @apply h-[600px] md:h-[700px] max-h-[80vh] overflow-hidden flex flex-col rounded-xl;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+  @apply h-[600px] max-h-[80vh] overflow-hidden flex flex-col rounded-xl;
 }
 
 .messages-container {
@@ -108,15 +106,6 @@
   40% { 
     transform: translateY(-6px);
   }
-}
-
-/* ChatGPT-like styling */
-.chatgpt-input {
-  @apply bg-gray-800/80 border border-gray-700 text-white rounded-full focus:ring-2 focus:ring-white/30 focus:border-white/30;
-}
-
-.chatgpt-button {
-  @apply rounded-full bg-gray-800/80 border border-gray-700 text-white hover:bg-gray-700 transition-colors;
 }
 
 /* Discount Card Flip Effect */

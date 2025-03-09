@@ -7,7 +7,7 @@ export type LanguageCode = "en" | "es" | "de" | "nl" | "fr" | "ca" | "pt";
 interface LanguageContextType {
   language: LanguageCode;
   setLanguage: (language: LanguageCode) => void;
-  t: (key: string, variables?: Record<string, string>) => string;
+  t: (key: string, params?: Record<string, string>) => string;
 }
 
 const defaultLanguage: LanguageCode = "en";
@@ -35,7 +35,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("language", newLanguage);
   }, []);
 
-  const t = useCallback((key: string, variables?: Record<string, string>): string => {
+  const t = useCallback((key: string, params?: Record<string, string>): string => {
     const keys = key.split(".");
     let value: any = translations[language];
 
@@ -52,22 +52,21 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
             return key;
           }
         }
-        return typeof fallback === "string" ? interpolateVariables(fallback, variables) : key;
+        return typeof fallback === "string" ? fallback : key;
       }
     }
 
-    return typeof value === "string" ? interpolateVariables(value, variables) : key;
-  }, [language]);
-
-  // Helper function to interpolate variables in translation strings
-  const interpolateVariables = (text: string, variables?: Record<string, string>): string => {
-    if (!variables) return text;
+    let result = typeof value === "string" ? value : key;
     
-    return Object.entries(variables).reduce((result, [key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      return result.replace(regex, value);
-    }, text);
-  };
+    // Replace parameters in the string if they exist
+    if (params && typeof result === "string") {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        result = result.replace(`{${paramKey}}`, paramValue);
+      });
+    }
+    
+    return result;
+  }, [language]);
 
   const contextValue: LanguageContextType = {
     language,
