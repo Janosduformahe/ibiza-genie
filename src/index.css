@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -107,6 +108,15 @@
   40% { 
     transform: translateY(-6px);
   }
+}
+
+/* ChatGPT-like styling */
+.chatgpt-input {
+  @apply bg-gray-800/80 border border-gray-700 text-white rounded-full focus:ring-2 focus:ring-white/30 focus:border-white/30;
+}
+
+.chatgpt-button {
+  @apply rounded-full bg-gray-800/80 border border-gray-700 text-white hover:bg-gray-700 transition-colors;
 }
 
 /* Discount Card Flip Effect */
