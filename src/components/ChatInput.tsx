@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import { Character, characterDetails } from "@/types/character";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -13,6 +14,7 @@ interface ChatInputProps {
 }
 
 export const ChatInput = ({ onSend, disabled, placeholder, selectedCharacter }: ChatInputProps) => {
+  const { t } = useLanguage();
   const [message, setMessage] = useState("");
   const characterInfo = characterDetails[selectedCharacter];
 
@@ -40,7 +42,7 @@ export const ChatInput = ({ onSend, disabled, placeholder, selectedCharacter }: 
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={placeholder || "Escribe tu mensaje..."}
+          placeholder={placeholder || t("chat.askQuestion")}
           className="flex-1 bg-white/20 border-white/20 text-white placeholder:text-white/60 focus:border-white"
           disabled={disabled}
         />
