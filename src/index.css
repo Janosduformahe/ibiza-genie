@@ -59,12 +59,11 @@
 }
 
 .glass-card {
-  @apply backdrop-blur-md bg-white/20 border border-white/30 shadow-lg;
+  @apply backdrop-blur-md bg-white/30 border border-white/30 shadow-lg;
 }
 
 .chat-container {
-  @apply h-[600px] md:h-[700px] max-h-[80vh] overflow-hidden flex flex-col rounded-xl;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+  @apply h-[600px] max-h-[80vh] overflow-hidden flex flex-col rounded-xl;
 }
 
 .messages-container {
