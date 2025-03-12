@@ -17,9 +17,9 @@ export const characterDetails = {
     name: "Dionisio",
     description: "Dios griego de la fiesta, amante del hedonismo y la vida nocturna.",
     greeting: "¡Hey! Soy Dionisio 🔥, el dios griego de la fiesta. Conozco todos los clubes, fiestas y la mejor vida nocturna de Ibiza. ¿Listo para vivir experiencias increíbles? ¡Pregúntame lo que quieras!",
-    background: "from-dionisio-primary via-dionisio-secondary to-dionisio-accent",
+    background: "from-bess-primary via-bess-secondary to-bess-accent",
     messageBackground: "bg-black/50",
-    userMessageBackground: "bg-dionisio-primary",
+    userMessageBackground: "bg-bess-primary",
     icons: ["music", "flame", "sparkles", "party-popper"],
     avatar: "/lovable-uploads/3c9e52f1-7477-4f97-bbbc-3f52b7a4266a.png",
     briefDescription: "Te guiaré por las mejores fiestas, clubes y eventos nocturnos que Ibiza tiene para ofrecer."
