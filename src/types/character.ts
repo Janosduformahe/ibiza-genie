@@ -1,5 +1,5 @@
 
-export type Character = "tanit" | "bess";
+export type Character = "tanit" | "dionisio";
 
 export const characterDetails = {
   tanit: {
@@ -10,16 +10,18 @@ export const characterDetails = {
     messageBackground: "bg-black/20",
     userMessageBackground: "bg-tanit-primary",
     icons: ["sun", "palmtree", "waves", "leaf"],
-    avatar: "/lovable-uploads/b2b8894f-3dac-4cc8-bbc7-f97b219a085e.png"
+    avatar: "/lovable-uploads/b2b8894f-3dac-4cc8-bbc7-f97b219a085e.png",
+    briefDescription: "Te mostraré los rincones naturales más bellos de Ibiza y las experiencias de bienestar más auténticas."
   },
-  bess: {
-    name: "Bess",
-    description: "Dios egipcio de la música y la fiesta, amante del hedonismo y la vida nocturna.",
-    greeting: "¡Hey! Soy Bess 🔥, el dios de la fiesta. Conozco todos los clubes, fiestas y la mejor vida nocturna de Ibiza. ¿Listo para vivir experiencias increíbles? ¡Pregúntame lo que quieras!",
+  dionisio: {
+    name: "Dionisio",
+    description: "Dios griego de la fiesta, amante del hedonismo y la vida nocturna.",
+    greeting: "¡Hey! Soy Dionisio 🔥, el dios griego de la fiesta. Conozco todos los clubes, fiestas y la mejor vida nocturna de Ibiza. ¿Listo para vivir experiencias increíbles? ¡Pregúntame lo que quieras!",
     background: "from-bess-primary via-bess-secondary to-bess-accent",
     messageBackground: "bg-black/50",
     userMessageBackground: "bg-bess-primary",
     icons: ["music", "flame", "sparkles", "party-popper"],
-    avatar: "/lovable-uploads/3c9e52f1-7477-4f97-bbbc-3f52b7a4266a.png"
+    avatar: "/lovable-uploads/3c9e52f1-7477-4f97-bbbc-3f52b7a4266a.png",
+    briefDescription: "Te guiaré por las mejores fiestas, clubes y eventos nocturnos que Ibiza tiene para ofrecer."
   },
 };

@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "./ui/input";
 import { Character, characterDetails } from "@/types/character";
+import { useState } from "react";
 
 interface ChatHeaderProps {
   isExpanded: boolean;
@@ -27,6 +28,21 @@ export const ChatHeader = ({
   onChangeCharacter
 }: ChatHeaderProps) => {
   const characterInfo = characterDetails[selectedCharacter];
+  const [showDescription, setShowDescription] = useState(false);
+  const [descriptionCharacter, setDescriptionCharacter] = useState<Character | null>(null);
+  
+  const handleCharacterChange = (character: Character) => {
+    if (onChangeCharacter) {
+      setDescriptionCharacter(character);
+      setShowDescription(true);
+      
+      // Show description for 3 seconds before changing character
+      setTimeout(() => {
+        onChangeCharacter(character);
+        setShowDescription(false);
+      }, 3000);
+    }
+  };
   
   const renderIcon = (iconName: string, index: number) => {
     const icons = {
@@ -70,7 +86,7 @@ export const ChatHeader = ({
                   size="sm" 
                   className="text-white hover:bg-white/20 mr-2"
                 >
-                  Cambiar a {selectedCharacter === "tanit" ? "Bess" : "Tanit"}
+                  Cambiar a {selectedCharacter === "tanit" ? "Dionisio" : "Tanit"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
@@ -88,7 +104,7 @@ export const ChatHeader = ({
                         : "border-white/20 hover:border-tanit-primary/70"
                     }`}
                     onClick={() => {
-                      onChangeCharacter("tanit");
+                      handleCharacterChange("tanit");
                     }}
                   >
                     <div className="aspect-square rounded-md overflow-hidden mb-2 bg-tanit-primary/20 flex justify-center items-center">
@@ -107,28 +123,34 @@ export const ChatHeader = ({
                   
                   <div 
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedCharacter === "bess" 
+                      selectedCharacter === "dionisio" 
                         ? "border-bess-primary bg-bess-primary/20" 
                         : "border-white/20 hover:border-bess-primary/70"
                     }`}
                     onClick={() => {
-                      onChangeCharacter("bess");
+                      handleCharacterChange("dionisio");
                     }}
                   >
                     <div className="aspect-square rounded-md overflow-hidden mb-2 bg-bess-primary/20 flex justify-center items-center">
                       <img 
-                        src={characterDetails.bess.avatar} 
-                        alt="Bess, dios de la fiesta" 
+                        src={characterDetails.dionisio.avatar} 
+                        alt="Dionisio, dios de la fiesta" 
                         className="w-3/4 h-3/4 object-contain"
                       />
                     </div>
-                    <h3 className="font-bold text-lg text-bess-primary">Bess</h3>
-                    <p className="text-sm text-gray-600">Dios egipcio de la música y la fiesta, amante del hedonismo y la vida nocturna.</p>
+                    <h3 className="font-bold text-lg text-bess-primary">Dionisio</h3>
+                    <p className="text-sm text-gray-600">Dios griego de la fiesta, amante del hedonismo y la vida nocturna.</p>
                     <div className="flex mt-2">
-                      {characterDetails.bess.icons.map((icon, i) => renderIcon(icon, i))}
+                      {characterDetails.dionisio.icons.map((icon, i) => renderIcon(icon, i))}
                     </div>
                   </div>
                 </div>
+                
+                {showDescription && descriptionCharacter && (
+                  <div className="mt-4 p-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg text-white text-center animate-pulse">
+                    <p>{characterDetails[descriptionCharacter].briefDescription}</p>
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           )}
