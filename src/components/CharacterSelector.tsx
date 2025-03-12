@@ -25,11 +25,13 @@ export const CharacterSelector = ({ selectedCharacter, onSelectCharacter }: Char
       >
         <div className="w-full h-full">
           <div className="relative">
-            <img 
-              src="/tanit-logo.png" 
-              alt="Tanit, diosa de la naturaleza" 
-              className="w-full object-cover aspect-[4/3]"
-            />
+            <div className="flex items-center justify-center p-2 bg-gradient-to-b from-tanit-primary/20 to-tanit-primary/60">
+              <img 
+                src={characterDetails.tanit.avatar} 
+                alt="Tanit, diosa de la naturaleza" 
+                className="w-28 h-28 md:w-32 md:h-32 object-contain"
+              />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-tanit-primary/90 to-transparent"></div>
             <div className="absolute bottom-0 left-0 p-4 text-left">
               <h3 className="font-bold text-2xl text-white">{t('characters.tanit.name')}</h3>
@@ -58,11 +60,13 @@ export const CharacterSelector = ({ selectedCharacter, onSelectCharacter }: Char
       >
         <div className="w-full h-full">
           <div className="relative">
-            <img 
-              src="/bess-logo.png" 
-              alt="Bess, dios de la fiesta" 
-              className="w-full object-cover aspect-[4/3]"
-            />
+            <div className="flex items-center justify-center p-2 bg-gradient-to-b from-bess-primary/20 to-bess-primary/60">
+              <img 
+                src={characterDetails.bess.avatar} 
+                alt="Bess, dios de la fiesta" 
+                className="w-28 h-28 md:w-32 md:h-32 object-contain"
+              />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-bess-primary/90 to-transparent"></div>
             <div className="absolute bottom-0 left-0 p-4 text-left">
               <h3 className="font-bold text-2xl text-white">{t('characters.bess.name')}</h3>

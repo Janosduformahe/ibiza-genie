@@ -10,6 +10,7 @@ export const characterDetails = {
     messageBackground: "bg-black/20",
     userMessageBackground: "bg-tanit-primary",
     icons: ["sun", "palmtree", "waves", "leaf"],
+    avatar: "/lovable-uploads/b2b8894f-3dac-4cc8-bbc7-f97b219a085e.png"
   },
   bess: {
     name: "Bess",
@@ -19,5 +20,6 @@ export const characterDetails = {
     messageBackground: "bg-black/50",
     userMessageBackground: "bg-bess-primary",
     icons: ["music", "flame", "sparkles", "party-popper"],
+    avatar: "/lovable-uploads/3c9e52f1-7477-4f97-bbbc-3f52b7a4266a.png"
   },
 };

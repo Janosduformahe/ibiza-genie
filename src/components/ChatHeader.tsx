@@ -49,8 +49,14 @@ export const ChatHeader = ({
         ? "from-tanit-primary to-tanit-secondary" 
         : "from-bess-primary to-bess-secondary"
     }`}>
-      <div className="flex items-center space-x-2">
-        {characterInfo.icons.map((icon, index) => renderIcon(icon, index))}
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/50">
+          <img 
+            src={characterInfo.avatar} 
+            alt={`${characterInfo.name} avatar`} 
+            className="w-full h-full object-cover"
+          />
+        </div>
         <h2 className="text-lg font-semibold text-white">Chat con {characterInfo.name}</h2>
       </div>
       
@@ -85,11 +91,11 @@ export const ChatHeader = ({
                       onChangeCharacter("tanit");
                     }}
                   >
-                    <div className="aspect-video rounded-md overflow-hidden mb-2">
+                    <div className="aspect-square rounded-md overflow-hidden mb-2 bg-tanit-primary/20 flex justify-center items-center">
                       <img 
-                        src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800" 
+                        src={characterDetails.tanit.avatar} 
                         alt="Tanit, diosa de la naturaleza" 
-                        className="w-full h-full object-cover"
+                        className="w-3/4 h-3/4 object-contain"
                       />
                     </div>
                     <h3 className="font-bold text-lg text-tanit-primary">Tanit</h3>
@@ -109,11 +115,11 @@ export const ChatHeader = ({
                       onChangeCharacter("bess");
                     }}
                   >
-                    <div className="aspect-video rounded-md overflow-hidden mb-2">
+                    <div className="aspect-square rounded-md overflow-hidden mb-2 bg-bess-primary/20 flex justify-center items-center">
                       <img 
-                        src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800" 
+                        src={characterDetails.bess.avatar} 
                         alt="Bess, dios de la fiesta" 
-                        className="w-full h-full object-cover"
+                        className="w-3/4 h-3/4 object-contain"
                       />
                     </div>
                     <h3 className="font-bold text-lg text-bess-primary">Bess</h3>
