@@ -147,7 +147,16 @@ export const ChatHeader = ({
                 </div>
                 
                 {showDescription && descriptionCharacter && (
-                  <div className="mt-4 p-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg text-white text-center animate-pulse">
+                  <div className={`mt-4 p-4 rounded-lg text-white text-center animate-pulse ${
+                    descriptionCharacter === "tanit" 
+                      ? "bg-gradient-to-r from-teal-500 to-blue-600" 
+                      : "bg-gradient-to-r from-pink-500 to-purple-600"
+                  }`}>
+                    <p className="font-medium text-lg">
+                      {descriptionCharacter === "dionisio" 
+                        ? "¡Preparando las mejores fiestas para ti! 🎉" 
+                        : "¡Conectando con la naturaleza de Ibiza! 🌊"}
+                    </p>
                     <p>{characterDetails[descriptionCharacter].briefDescription}</p>
                   </div>
                 )}

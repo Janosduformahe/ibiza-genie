@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 interface MessagePayload {
@@ -18,7 +17,7 @@ const corsHeaders = {
 // Define personality traits for each character
 const characterGreetings = {
   tanit: "¡Hola! Soy Tanit 🌊, tu guía para descubrir la naturaleza y tranquilidad de Ibiza. Puedes preguntarme sobre playas escondidas, rutas de senderismo, yoga, gastronomía sostenible y todo lo relacionado con el bienestar y la belleza natural de nuestra isla. ¿En qué puedo ayudarte hoy? ☀️",
-  bess: "¡Hey! Soy Bess 🔥, tu conexión con la mejor fiesta de Ibiza! Pregúntame sobre clubes, DJs, eventos especiales, fiestas en barco, pool parties y todo lo que necesitas para vivir la experiencia de fiesta definitiva en la isla. ¿Listo para la acción? 💃🎉"
+  dionisio: "¡Hey! Soy Dionisio 🔥, tu conexión con la mejor fiesta de Ibiza! Pregúntame sobre clubes, DJs, eventos especiales, fiestas en barco, pool parties y todo lo que necesitas para vivir la experiencia de fiesta definitiva en la isla. ¿Listo para la acción? 💃🎉"
 };
 
 serve(async (req) => {
