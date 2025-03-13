@@ -137,33 +137,31 @@ export const ChatInterface = ({
   };
 
   return (
-    <div 
+    <Card 
       className={cn(
-        "flex flex-col h-full bg-[#1E1E1E]",
-        fullPage ? "w-full" : "rounded-xl overflow-hidden"
+        "chat-container glass-card transition-all duration-500 ease-in-out",
+        fullPage ? "w-full h-[calc(100vh-200px)] min-h-[600px] !m-0" : 
+          isExpanded ? "fixed inset-0 m-0 rounded-none z-50 min-h-screen" : "max-w-2xl mx-auto"
       )}
+      onClick={() => !isExpanded && !fullPage && setIsExpanded(true)}
     >
-      <ChatHeader 
-        isExpanded={isExpanded || fullPage}
-        onClose={handleClose}
-        onWhatsAppConnect={handleWhatsAppConnect}
-        phoneNumber={phoneNumber}
-        setPhoneNumber={setPhoneNumber}
-        showCloseButton={!fullPage || isExpanded}
-        selectedCharacter={selectedCharacter}
-        onChangeCharacter={handleChangeCharacter}
-      />
-      
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex flex-col h-full">
+        <ChatHeader 
+          isExpanded={isExpanded || fullPage}
+          onClose={handleClose}
+          onWhatsAppConnect={handleWhatsAppConnect}
+          phoneNumber={phoneNumber}
+          setPhoneNumber={setPhoneNumber}
+          showCloseButton={!fullPage || isExpanded}
+          selectedCharacter={selectedCharacter}
+          onChangeCharacter={handleChangeCharacter}
+        />
         <MessagesContainer 
           messages={messages}
           isLoading={isLoading}
           isExpanded={isExpanded || fullPage}
           selectedCharacter={selectedCharacter}
         />
-        
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#1E1E1E] to-transparent h-32 pointer-events-none" />
-        
         <ChatInput 
           onSend={handleSendMessage} 
           disabled={isLoading} 
@@ -171,6 +169,6 @@ export const ChatInterface = ({
           selectedCharacter={selectedCharacter}
         />
       </div>
-    </div>
+    </Card>
   );
 };
