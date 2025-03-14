@@ -1,89 +1,43 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { translations } from "@/translations";
+import { createContext, useContext, useState } from "react";
+import translations from "@/translations"; // Fix import statement
 
-export type LanguageCode = "en" | "es" | "de" | "nl" | "fr" | "ca" | "pt";
+type Language = "en" | "es";
 
-interface LanguageContextType {
-  language: LanguageCode;
-  setLanguage: (language: LanguageCode) => void;
-  t: (key: string, params?: Record<string, string>) => string;
-}
+type LanguageContextType = {
+  language: Language;
+  t: (key: string) => string;
+  setLanguage: (language: Language) => void;
+};
 
-const defaultLanguage: LanguageCode = "en";
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const LanguageContext = createContext<LanguageContextType>({
-  language: defaultLanguage,
-  setLanguage: () => {},
-  t: (key: string) => key,
-});
+export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+  const [language, setLanguage] = useState<Language>("es");
 
-export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguageState] = useState<LanguageCode>(() => {
-    const savedLanguage = localStorage.getItem("language");
-    return (savedLanguage as LanguageCode) || defaultLanguage;
-  });
-
-  useEffect(() => {
-    localStorage.setItem("language", language);
-    // Force update on all components that use translations
-    document.documentElement.lang = language;
-  }, [language]);
-
-  const setLanguage = useCallback((newLanguage: LanguageCode) => {
-    setLanguageState(newLanguage);
-    localStorage.setItem("language", newLanguage);
-  }, []);
-
-  const t = useCallback((key: string, params?: Record<string, string>): string => {
+  const t = (key: string): string => {
     const keys = key.split(".");
     let value: any = translations[language];
 
     for (const k of keys) {
-      if (value && typeof value === "object" && k in value) {
-        value = value[k];
-      } else {
-        // Fallback to English or just return the key if not found
-        let fallback = translations[defaultLanguage];
-        for (const fallbackKey of keys) {
-          if (fallback && typeof fallback === "object" && fallbackKey in fallback) {
-            fallback = fallback[fallbackKey];
-          } else {
-            return key;
-          }
-        }
-        return typeof fallback === "string" ? fallback : key;
-      }
+      if (value === undefined) return key;
+      value = value[k];
     }
 
-    let result = typeof value === "string" ? value : key;
-    
-    // Replace parameters in the string if they exist
-    if (params && typeof result === "string") {
-      Object.entries(params).forEach(([paramKey, paramValue]) => {
-        result = result.replace(`{${paramKey}}`, paramValue);
-      });
-    }
-    
-    return result;
-  }, [language]);
-
-  const contextValue: LanguageContextType = {
-    language,
-    setLanguage,
-    t,
+    if (typeof value !== "string") return key;
+    return value;
   };
 
   return (
-    <LanguageContext.Provider value={contextValue}>
+    <LanguageContext.Provider value={{ language, t, setLanguage }}>
       {children}
     </LanguageContext.Provider>
   );
 };
 
-export const useLanguage = (): LanguageContextType => {
+export const useLanguage = () => {
   const context = useContext(LanguageContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useLanguage must be used within a LanguageProvider");
   }
   return context;

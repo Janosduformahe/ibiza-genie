@@ -1,284 +1,217 @@
-
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-import { ChatInput } from "./ChatInput";
+import { useState, useEffect, useRef } from "react";
+import { CharacterSelector } from "./CharacterSelector";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesContainer } from "./MessagesContainer";
-import { useNavigate } from "react-router-dom";
-import { Character, characterDetails } from "@/types/character";
+import { ChatInput } from "./ChatInput";
 import { useLanguage } from "@/hooks/useLanguage";
+import { Button } from "@/components/ui/button"; // Adding Button import
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
-interface Message {
+export interface Message {
+  id: string;
   content: string;
   isUser: boolean;
+  character?: string;
 }
 
-interface ChatInterfaceProps {
-  fullPage?: boolean;
-  selectedCharacter?: Character;
-  onChangeCharacter?: (character: Character) => void;
-}
-
-export const ChatInterface = ({ 
-  fullPage = false, 
-  selectedCharacter = "tanit",
-  onChangeCharacter
-}: ChatInterfaceProps) => {
-  const navigate = useNavigate();
+export const ChatInterface = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [character, setCharacter] = useState<string>("assistant");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const { user } = useAuth();
-  const characterInfo = characterDetails[selectedCharacter];
-  
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [isExpanded, setIsExpanded] = useState(fullPage);
-  const { toast } = useToast();
 
-  // Load initial greeting or chat history
   useEffect(() => {
     if (user) {
-      loadChatHistory(selectedCharacter);
-    } else {
-      // If not logged in, just show the greeting
-      setMessages([{
-        content: t(`characters.${selectedCharacter}.greeting`),
-        isUser: false,
-      }]);
+      loadChatHistory();
     }
-  }, [selectedCharacter, user]);
-  
-  // Load chat history from Supabase for logged-in users
-  const loadChatHistory = async (character: Character) => {
+  }, [user, character]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const loadChatHistory = async () => {
     if (!user) return;
-    
+
     try {
-      setIsLoadingHistory(true);
-      
       const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('character', character)
-        .order('created_at', { ascending: true });
-        
+        .from("chat_messages")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("character", character)
+        .order("created_at", { ascending: true });
+
       if (error) {
-        throw error;
+        console.error("Error loading chat history:", error);
+        return;
       }
-      
+
       if (data && data.length > 0) {
-        const formattedMessages = data.map(msg => ({
+        const formattedMessages: Message[] = data.map((msg) => ({
+          id: msg.id,
           content: msg.content,
-          isUser: msg.is_user
+          isUser: msg.is_user,
+          character: msg.character,
         }));
         setMessages(formattedMessages);
-      } else {
-        // If no history, just show the greeting
-        setMessages([{
-          content: t(`characters.${selectedCharacter}.greeting`),
-          isUser: false,
-        }]);
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
-      setMessages([{
-        content: t(`characters.${selectedCharacter}.greeting`),
-        isUser: false,
-      }]);
-    } finally {
-      setIsLoadingHistory(false);
+      console.error("Error loading chat history:", error);
     }
   };
-  
-  // Save message to database for logged-in users
-  const saveMessage = async (content: string, isUser: boolean) => {
+
+  const saveChatMessage = async (message: Message) => {
     if (!user) return;
-    
+
     try {
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert({
-          user_id: user.id,
-          character: selectedCharacter,
-          content,
-          is_user: isUser
-        });
-        
+      const { error } = await supabase.from("chat_messages").insert({
+        user_id: user.id,
+        character: character,
+        content: message.content,
+        is_user: message.isUser,
+      });
+
       if (error) {
-        console.error('Error saving message:', error);
+        console.error("Error saving chat message:", error);
       }
     } catch (error) {
-      console.error('Error saving message:', error);
+      console.error("Error saving chat message:", error);
     }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleSendMessage = async (content: string) => {
-    if (!isExpanded && !fullPage) {
-      setIsExpanded(true);
-      return;
-    }
-    
+    if (!content.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content,
+      isUser: true,
+      character,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    if (user) saveChatMessage(userMessage);
+    setLoading(true);
+
     try {
-      setIsLoading(true);
-      
-      // Add user message to state and save to DB if logged in
-      setMessages((prev) => [...prev, { content, isUser: true }]);
-      if (user) {
-        await saveMessage(content, true);
-      }
-
-      const { data, error } = await supabase.functions.invoke('chat', {
-        body: { 
-          message: content,
-          character: selectedCharacter
-        }
-      });
-
-      if (error) {
-        console.error('Chat function error:', error);
-        throw error;
-      }
-
-      const botResponse = data.response || t('chat.errorResponse', { name: characterInfo.name });
-      
-      // Add bot message to state and save to DB if logged in
-      setMessages((prev) => [
-        ...prev,
-        {
-          content: botResponse,
-          isUser: false,
+      // Call your chat API here
+      const response = await fetch(`${import.meta.env.VITE_APP_SUPABASE_URL}/functions/v1/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_APP_SUPABASE_ANON_KEY}`,
         },
-      ]);
-      
-      if (user) {
-        await saveMessage(botResponse, false);
-      }
-      
-    } catch (error) {
-      console.error('Chat error:', error);
-      toast({
-        title: t('chat.error'),
-        description: t('chat.errorMessage'),
-        variant: "destructive",
+        body: JSON.stringify({
+          messages: [
+            ...messages.map((msg) => ({
+              role: msg.isUser ? "user" : "assistant",
+              content: msg.content,
+            })),
+            { role: "user", content },
+          ],
+          character,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botMessage: Message = {
+        id: Date.now().toString() + "-bot",
+        content: data.message,
+        isUser: false,
+        character,
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+      if (user) saveChatMessage(botMessage);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        variant: "destructive",
+        title: t("chat.error"),
+        description: t("chat.errorDescription"),
+      });
+
+      const errorMessage: Message = {
+        id: Date.now().toString() + "-error",
+        content: t("chat.errorMessage"),
+        isUser: false,
+        character,
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleWhatsAppConnect = async () => {
-    try {
-      if (!phoneNumber.match(/^\+?[1-9]\d{1,14}$/)) {
-        throw new Error(t('chat.invalidPhone'));
-      }
-
-      const { data, error } = await supabase.functions.invoke('whatsapp', {
-        body: { 
-          message: {
-            phoneNumber: phoneNumber,
-            character: selectedCharacter
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: t('chat.whatsappSuccess'),
-        description: t('chat.whatsappMessage', { name: characterInfo.name }),
-      });
-    } catch (error) {
-      console.error('WhatsApp error:', error);
-      toast({
-        title: t('chat.error'),
-        description: error.message || t('chat.whatsappError'),
-        variant: "destructive",
-      });
-    }
+  const handleClearChat = () => {
+    setMessages([]);
   };
 
-  const handleClose = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (fullPage) {
-      navigate('/');
-    } else {
-      setIsExpanded(false);
-    }
-  };
-
-  const handleChangeCharacter = (character: Character) => {
-    if (onChangeCharacter) {
-      onChangeCharacter(character);
-      
-      if (user) {
-        // For logged-in users, load their chat history with this character
-        loadChatHistory(character);
-      } else {
-        // For non-logged-in users, just show the greeting
-        setMessages([
-          {
-            content: t(`characters.${character}.greeting`),
-            isUser: false,
-          },
-        ]);
-      }
-    }
+  const handleCharacterChange = (newCharacter: string) => {
+    setCharacter(newCharacter);
+    setMessages([]);
   };
 
   return (
-    <Card 
-      className={cn(
-        "chat-container glass-card transition-all duration-500 ease-in-out",
-        fullPage ? "w-full h-[calc(100vh-200px)] min-h-[600px] !m-0" : 
-          isExpanded ? "fixed inset-0 m-0 rounded-none z-50 min-h-screen" : "max-w-2xl mx-auto"
-      )}
-      onClick={() => !isExpanded && !fullPage && setIsExpanded(true)}
-    >
-      <div className="flex flex-col h-full">
-        <ChatHeader 
-          isExpanded={isExpanded || fullPage}
-          onClose={handleClose}
-          onWhatsAppConnect={handleWhatsAppConnect}
-          phoneNumber={phoneNumber}
-          setPhoneNumber={setPhoneNumber}
-          showCloseButton={!fullPage || isExpanded}
-          selectedCharacter={selectedCharacter}
-          onChangeCharacter={handleChangeCharacter}
-        />
-        <MessagesContainer 
-          messages={messages}
-          isLoading={isLoading || isLoadingHistory}
-          isExpanded={isExpanded || fullPage}
-          selectedCharacter={selectedCharacter}
-        />
-        <ChatInput 
-          onSend={handleSendMessage} 
-          disabled={isLoading || isLoadingHistory} 
-          placeholder={isExpanded || fullPage ? t(`chat.askAbout${selectedCharacter === "tanit" ? "Nature" : "Parties"}`) : t('chat.clickToChat', { name: characterInfo.name })}
-          selectedCharacter={selectedCharacter}
+    <div className="relative h-full flex flex-col bg-gradient-to-b from-gray-900 to-black text-white overflow-hidden rounded-lg shadow-lg border border-gray-800">
+      <ChatHeader character={character} />
+      
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <CharacterSelector 
+          selectedCharacter={character} 
+          onCharacterSelect={handleCharacterChange}
         />
         
-        {!user && messages.length > 1 && !isLoading && (
-          <div className="absolute bottom-20 left-0 right-0 p-2 z-10 backdrop-blur-sm bg-black/60 text-center">
-            <p className="text-white text-sm mb-2">
-              {t('chat.loginToSaveHistory')}
-            </p>
-            <Button 
-              onClick={() => navigate('/auth')} 
-              variant="outline" 
-              size="sm" 
-              className="text-white border-white/30 hover:bg-white/20"
-            >
-              {t('auth.signIn')}
-            </Button>
+        <MessagesContainer 
+          messages={messages} 
+          loading={loading} 
+          scrollRef={messagesEndRef}
+        />
+      </div>
+      
+      <div className="p-4 border-t border-gray-800 bg-gray-900 space-y-2">
+        {!user && (
+          <div className="text-center mb-4 p-2 bg-blue-900/40 rounded-lg">
+            <p className="text-sm text-gray-300 mb-2">{t("auth.signInToSaveChats")}</p>
+            <div className="flex justify-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
+                onClick={() => window.location.href = '/auth'}
+              >
+                {t("auth.signIn")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
+                onClick={() => window.location.href = '/auth'}
+              >
+                {t("auth.signUp")}
+              </Button>
+            </div>
           </div>
         )}
+        <ChatInput 
+          onSendMessage={handleSendMessage} 
+          onClearChat={handleClearChat} 
+          disabled={loading} 
+        />
       </div>
-    </Card>
+    </div>
   );
 };
