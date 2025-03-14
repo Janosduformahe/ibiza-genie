@@ -1,8 +1,8 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { Character } from "@/types/character";
-import { Message } from "./ChatInterface";
+import { Message } from "@/hooks/useChatMessages";
 
 interface MessagesContainerProps {
   messages: Message[];
@@ -17,14 +17,14 @@ export const MessagesContainer = ({
   messages, 
   loading, 
   isLoading, 
-  selectedCharacter 
+  selectedCharacter,
+  scrollRef
 }: MessagesContainerProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const actualLoading = loading || isLoading;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    scrollRef?.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, scrollRef]);
 
   return (
     <div className="messages-container flex-1 overflow-y-auto p-4 space-y-4">
@@ -43,7 +43,7 @@ export const MessagesContainer = ({
           <div className="typing-dot w-2 h-2 bg-white/70 rounded-full animate-pulse delay-300"></div>
         </div>
       )}
-      <div ref={messagesEndRef || messagesEndRef} />
+      <div ref={scrollRef} />
     </div>
   );
 };
