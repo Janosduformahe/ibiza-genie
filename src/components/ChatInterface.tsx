@@ -1,6 +1,4 @@
-
 import { useState, useEffect, useRef } from "react";
-import { CharacterSelector } from "./CharacterSelector";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesContainer } from "./MessagesContainer";
 import { ChatInput } from "./ChatInput";
@@ -10,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Character } from "@/types/character";
+import { CharacterSelector } from "./CharacterSelector";
 
 export interface Message {
   id: string;
@@ -36,7 +35,6 @@ export const ChatInterface = ({
   const { t } = useLanguage();
   const { user } = useAuth();
 
-  // Sync with external character if provided
   useEffect(() => {
     if (externalCharacter && externalCharacter !== character) {
       setCharacter(externalCharacter);
@@ -121,7 +119,6 @@ export const ChatInterface = ({
     setLoading(true);
 
     try {
-      // Call your chat API here
       const response = await fetch(`${import.meta.env.VITE_APP_SUPABASE_URL}/functions/v1/chat`, {
         method: "POST",
         headers: {
@@ -197,7 +194,7 @@ export const ChatInterface = ({
       <div className="flex-1 overflow-hidden flex flex-col">
         <CharacterSelector 
           selectedCharacter={character} 
-          onCharacterSelect={handleCharacterChange}
+          onSelectCharacter={handleCharacterChange}
         />
         
         <MessagesContainer 
