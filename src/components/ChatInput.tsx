@@ -2,24 +2,34 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 import { Character, characterDetails } from "@/types/character";
 
 interface ChatInputProps {
-  onSend: (message: string) => void;
+  onSend?: (message: string) => void;
+  onSendMessage?: (message: string) => void;
+  onClearChat?: () => void;
   disabled?: boolean;
   placeholder?: string;
-  selectedCharacter: Character;
+  selectedCharacter?: Character;
 }
 
-export const ChatInput = ({ onSend, disabled, placeholder, selectedCharacter }: ChatInputProps) => {
+export const ChatInput = ({ 
+  onSend, 
+  onSendMessage,
+  onClearChat,
+  disabled, 
+  placeholder, 
+  selectedCharacter = "tanit" 
+}: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const characterInfo = characterDetails[selectedCharacter];
+  const handleSend = onSend || onSendMessage;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      onSend(message);
+    if (message.trim() && handleSend) {
+      handleSend(message);
       setMessage("");
     }
   };
@@ -55,6 +65,17 @@ export const ChatInput = ({ onSend, disabled, placeholder, selectedCharacter }: 
         >
           <Send className="h-4 w-4" />
         </Button>
+        
+        {onClearChat && (
+          <Button
+            type="button"
+            onClick={onClearChat}
+            variant="outline"
+            className="bg-transparent border-white/20 text-white/80 hover:bg-white/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </form>
   );

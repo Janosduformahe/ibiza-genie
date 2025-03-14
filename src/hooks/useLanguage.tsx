@@ -2,18 +2,18 @@
 import { createContext, useContext, useState } from "react";
 import translations from "@/translations"; // Fix import statement
 
-type Language = "en" | "es";
+export type LanguageCode = "en" | "es" | "de" | "nl" | "fr" | "ca" | "pt";
 
 type LanguageContextType = {
-  language: Language;
+  language: LanguageCode;
   t: (key: string) => string;
-  setLanguage: (language: Language) => void;
+  setLanguage: (language: LanguageCode) => void;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
-  const [language, setLanguage] = useState<Language>("es");
+  const [language, setLanguage] = useState<LanguageCode>("es");
 
   const t = (key: string): string => {
     const keys = key.split(".");

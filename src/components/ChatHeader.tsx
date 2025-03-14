@@ -7,13 +7,14 @@ import { Character, characterDetails } from "@/types/character";
 import { useState } from "react";
 
 interface ChatHeaderProps {
-  isExpanded: boolean;
-  onClose: (e: React.MouseEvent) => void;
-  onWhatsAppConnect: () => void;
-  phoneNumber: string;
-  setPhoneNumber: (value: string) => void;
+  isExpanded?: boolean;
+  onClose?: (e: React.MouseEvent) => void;
+  onWhatsAppConnect?: () => void;
+  phoneNumber?: string;
+  setPhoneNumber?: (value: string) => void;
   showCloseButton?: boolean;
-  selectedCharacter: Character;
+  selectedCharacter?: Character;
+  character?: string;
   onChangeCharacter?: (character: Character) => void;
 }
 
@@ -25,9 +26,12 @@ export const ChatHeader = ({
   setPhoneNumber,
   showCloseButton = true,
   selectedCharacter,
+  character,
   onChangeCharacter
 }: ChatHeaderProps) => {
-  const characterInfo = characterDetails[selectedCharacter];
+  // Use selectedCharacter or character prop, defaulting to "tanit"
+  const actualCharacter = (selectedCharacter || character || "tanit") as Character;
+  const characterInfo = characterDetails[actualCharacter];
   const [showDescription, setShowDescription] = useState(false);
   const [descriptionCharacter, setDescriptionCharacter] = useState<Character | null>(null);
   
@@ -61,7 +65,7 @@ export const ChatHeader = ({
 
   return (
     <div className={`flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r ${
-      selectedCharacter === "tanit" 
+      actualCharacter === "tanit" 
         ? "from-tanit-primary to-tanit-secondary" 
         : "from-bess-primary to-bess-secondary"
     }`}>

@@ -2,44 +2,48 @@
 import { useEffect, useRef } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { Character } from "@/types/character";
-
-interface Message {
-  content: string;
-  isUser: boolean;
-}
+import { Message } from "./ChatInterface";
 
 interface MessagesContainerProps {
   messages: Message[];
-  isLoading: boolean;
-  isExpanded: boolean;
-  selectedCharacter: Character;
+  loading?: boolean;
+  isLoading?: boolean;
+  isExpanded?: boolean;
+  selectedCharacter?: Character;
+  scrollRef?: React.RefObject<HTMLDivElement>;
 }
 
-export const MessagesContainer = ({ messages, isLoading, selectedCharacter }: MessagesContainerProps) => {
+export const MessagesContainer = ({ 
+  messages, 
+  loading, 
+  isLoading, 
+  selectedCharacter 
+}: MessagesContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const actualLoading = loading || isLoading;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    <div className="messages-container">
+    <div className="messages-container flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message, index) => (
         <ChatMessage 
           key={index} 
           content={message.content} 
           isUser={message.isUser} 
-          selectedCharacter={selectedCharacter}
+          selectedCharacter={selectedCharacter || message.character as Character}
         />
       ))}
-      {isLoading && (
-        <div className="typing-indicator flex space-x-2 items-center">
-          <div className="typing-dot"></div>
-          <div className="typing-dot"></div>
-          <div className="typing-dot"></div>
+      {actualLoading && (
+        <div className="typing-indicator flex space-x-2 items-center p-3 bg-gray-800/50 rounded-lg w-20">
+          <div className="typing-dot w-2 h-2 bg-white/70 rounded-full animate-pulse"></div>
+          <div className="typing-dot w-2 h-2 bg-white/70 rounded-full animate-pulse delay-150"></div>
+          <div className="typing-dot w-2 h-2 bg-white/70 rounded-full animate-pulse delay-300"></div>
         </div>
       )}
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef || messagesEndRef} />
     </div>
   );
 };

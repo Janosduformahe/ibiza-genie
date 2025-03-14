@@ -1,13 +1,15 @@
+
 import { useState, useEffect, useRef } from "react";
 import { CharacterSelector } from "./CharacterSelector";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesContainer } from "./MessagesContainer";
 import { ChatInput } from "./ChatInput";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Button } from "@/components/ui/button"; // Adding Button import
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { Character } from "@/types/character";
 
 export interface Message {
   id: string;
@@ -16,13 +18,30 @@ export interface Message {
   character?: string;
 }
 
-export const ChatInterface = () => {
+interface ChatInterfaceProps {
+  fullPage?: boolean;
+  selectedCharacter?: Character;
+  onChangeCharacter?: (character: Character) => void;
+}
+
+export const ChatInterface = ({ 
+  fullPage, 
+  selectedCharacter: externalCharacter,
+  onChangeCharacter
+}: ChatInterfaceProps = {}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [character, setCharacter] = useState<string>("assistant");
+  const [character, setCharacter] = useState<Character>(externalCharacter || "tanit");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const { user } = useAuth();
+
+  // Sync with external character if provided
+  useEffect(() => {
+    if (externalCharacter && externalCharacter !== character) {
+      setCharacter(externalCharacter);
+    }
+  }, [externalCharacter]);
 
   useEffect(() => {
     if (user) {
@@ -160,14 +179,20 @@ export const ChatInterface = () => {
     setMessages([]);
   };
 
-  const handleCharacterChange = (newCharacter: string) => {
+  const handleCharacterChange = (newCharacter: Character) => {
     setCharacter(newCharacter);
     setMessages([]);
+    if (onChangeCharacter) {
+      onChangeCharacter(newCharacter);
+    }
   };
 
   return (
     <div className="relative h-full flex flex-col bg-gradient-to-b from-gray-900 to-black text-white overflow-hidden rounded-lg shadow-lg border border-gray-800">
-      <ChatHeader character={character} />
+      <ChatHeader 
+        selectedCharacter={character} 
+        isExpanded={fullPage}
+      />
       
       <div className="flex-1 overflow-hidden flex flex-col">
         <CharacterSelector 
@@ -177,7 +202,8 @@ export const ChatInterface = () => {
         
         <MessagesContainer 
           messages={messages} 
-          loading={loading} 
+          loading={loading}
+          selectedCharacter={character}
           scrollRef={messagesEndRef}
         />
       </div>
@@ -209,7 +235,8 @@ export const ChatInterface = () => {
         <ChatInput 
           onSendMessage={handleSendMessage} 
           onClearChat={handleClearChat} 
-          disabled={loading} 
+          disabled={loading}
+          selectedCharacter={character}
         />
       </div>
     </div>
