@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,7 @@ import { MessagesContainer } from "./MessagesContainer";
 import { useNavigate } from "react-router-dom";
 import { Character, characterDetails } from "@/types/character";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   content: string;
@@ -28,18 +30,92 @@ export const ChatInterface = ({
 }: ChatInterfaceProps) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const characterInfo = characterDetails[selectedCharacter];
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      content: t(`characters.${selectedCharacter}.greeting`),
-      isUser: false,
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isExpanded, setIsExpanded] = useState(fullPage);
   const { toast } = useToast();
+
+  // Load initial greeting or chat history
+  useEffect(() => {
+    if (user) {
+      loadChatHistory(selectedCharacter);
+    } else {
+      // If not logged in, just show the greeting
+      setMessages([{
+        content: t(`characters.${selectedCharacter}.greeting`),
+        isUser: false,
+      }]);
+    }
+  }, [selectedCharacter, user]);
+  
+  // Load chat history from Supabase for logged-in users
+  const loadChatHistory = async (character: Character) => {
+    if (!user) return;
+    
+    try {
+      setIsLoadingHistory(true);
+      
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('character', character)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        const formattedMessages = data.map(msg => ({
+          content: msg.content,
+          isUser: msg.is_user
+        }));
+        setMessages(formattedMessages);
+      } else {
+        // If no history, just show the greeting
+        setMessages([{
+          content: t(`characters.${selectedCharacter}.greeting`),
+          isUser: false,
+        }]);
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+      setMessages([{
+        content: t(`characters.${selectedCharacter}.greeting`),
+        isUser: false,
+      }]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+  
+  // Save message to database for logged-in users
+  const saveMessage = async (content: string, isUser: boolean) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          user_id: user.id,
+          character: selectedCharacter,
+          content,
+          is_user: isUser
+        });
+        
+      if (error) {
+        console.error('Error saving message:', error);
+      }
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+  };
 
   const handleSendMessage = async (content: string) => {
     if (!isExpanded && !fullPage) {
@@ -49,7 +125,12 @@ export const ChatInterface = ({
     
     try {
       setIsLoading(true);
+      
+      // Add user message to state and save to DB if logged in
       setMessages((prev) => [...prev, { content, isUser: true }]);
+      if (user) {
+        await saveMessage(content, true);
+      }
 
       const { data, error } = await supabase.functions.invoke('chat', {
         body: { 
@@ -63,13 +144,21 @@ export const ChatInterface = ({
         throw error;
       }
 
+      const botResponse = data.response || t('chat.errorResponse', { name: characterInfo.name });
+      
+      // Add bot message to state and save to DB if logged in
       setMessages((prev) => [
         ...prev,
         {
-          content: data.response || t('chat.errorResponse', { name: characterInfo.name }),
+          content: botResponse,
           isUser: false,
         },
       ]);
+      
+      if (user) {
+        await saveMessage(botResponse, false);
+      }
+      
     } catch (error) {
       console.error('Chat error:', error);
       toast({
@@ -126,13 +215,18 @@ export const ChatInterface = ({
     if (onChangeCharacter) {
       onChangeCharacter(character);
       
-      // Reset messages with the new character's greeting
-      setMessages([
-        {
-          content: t(`characters.${character}.greeting`),
-          isUser: false,
-        },
-      ]);
+      if (user) {
+        // For logged-in users, load their chat history with this character
+        loadChatHistory(character);
+      } else {
+        // For non-logged-in users, just show the greeting
+        setMessages([
+          {
+            content: t(`characters.${character}.greeting`),
+            isUser: false,
+          },
+        ]);
+      }
     }
   };
 
@@ -158,16 +252,32 @@ export const ChatInterface = ({
         />
         <MessagesContainer 
           messages={messages}
-          isLoading={isLoading}
+          isLoading={isLoading || isLoadingHistory}
           isExpanded={isExpanded || fullPage}
           selectedCharacter={selectedCharacter}
         />
         <ChatInput 
           onSend={handleSendMessage} 
-          disabled={isLoading} 
+          disabled={isLoading || isLoadingHistory} 
           placeholder={isExpanded || fullPage ? t(`chat.askAbout${selectedCharacter === "tanit" ? "Nature" : "Parties"}`) : t('chat.clickToChat', { name: characterInfo.name })}
           selectedCharacter={selectedCharacter}
         />
+        
+        {!user && messages.length > 1 && !isLoading && (
+          <div className="absolute bottom-20 left-0 right-0 p-2 z-10 backdrop-blur-sm bg-black/60 text-center">
+            <p className="text-white text-sm mb-2">
+              {t('chat.loginToSaveHistory')}
+            </p>
+            <Button 
+              onClick={() => navigate('/auth')} 
+              variant="outline" 
+              size="sm" 
+              className="text-white border-white/30 hover:bg-white/20"
+            >
+              {t('auth.signIn')}
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );
