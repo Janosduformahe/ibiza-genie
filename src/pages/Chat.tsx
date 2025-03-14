@@ -28,7 +28,6 @@ const Chat = () => {
           
           <div className={`${characterInfo.messageBackground} backdrop-blur-md rounded-xl p-6 shadow-lg border border-white/20`}>
             <ChatInterface 
-              fullPage={true}
               selectedCharacter={selectedCharacter}
               onChangeCharacter={setSelectedCharacter}
             />
