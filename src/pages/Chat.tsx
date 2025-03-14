@@ -12,26 +12,35 @@ const Chat = () => {
   const characterInfo = characterDetails[selectedCharacter];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${characterInfo.background}`}>
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 text-center">
-            {t(`chat.with${selectedCharacter.charAt(0).toUpperCase() + selectedCharacter.slice(1)}`)} - {t('chat.chooseGuide')}
-          </h1>
-          
-          <CharacterSelector 
+    <div className="min-h-screen bg-[#1E1E1E] flex">
+      {/* Sidebar */}
+      <div className="w-72 bg-[#2A2A2A] border-r border-white/10 p-4 flex flex-col">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-white mb-4">Chat con IA</h1>
+          <button 
+            className="w-full bg-[#4A65FF] text-white rounded-lg py-3 px-4 flex items-center justify-center gap-2 hover:bg-[#4A65FF]/90 transition-colors"
+          >
+            <span>+ Nuevo chat</span>
+          </button>
+        </div>
+        
+        <CharacterSelector 
+          selectedCharacter={selectedCharacter}
+          onSelectCharacter={setSelectedCharacter}
+          className="mb-4"
+        />
+      </div>
+
+      {/* Main chat area */}
+      <div className="flex-1 flex flex-col">
+        <Navigation className="bg-[#2A2A2A] border-b border-white/10" />
+        
+        <div className="flex-1 relative">
+          <ChatInterface 
+            fullPage={true} 
             selectedCharacter={selectedCharacter}
-            onSelectCharacter={setSelectedCharacter}
+            onChangeCharacter={setSelectedCharacter}
           />
-          
-          <div className={`${characterInfo.messageBackground} backdrop-blur-md rounded-xl p-6 shadow-lg border border-white/20`}>
-            <ChatInterface 
-              selectedCharacter={selectedCharacter}
-              onChangeCharacter={setSelectedCharacter}
-            />
-          </div>
         </div>
       </div>
     </div>

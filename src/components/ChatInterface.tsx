@@ -1,20 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { ChatInput } from "./ChatInput";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesContainer } from "./MessagesContainer";
-import { ChatInput } from "./ChatInput";
+import { useNavigate } from "react-router-dom";
+import { Character, characterDetails } from "@/types/character";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
-import { Character } from "@/types/character";
-import { CharacterSelector } from "./CharacterSelector";
 
-export interface Message {
-  id: string;
+interface Message {
   content: string;
   isUser: boolean;
-  character?: string;
 }
 
 interface ChatInterfaceProps {
@@ -24,216 +22,153 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface = ({ 
-  fullPage, 
-  selectedCharacter: externalCharacter,
+  fullPage = false, 
+  selectedCharacter = "tanit",
   onChangeCharacter
-}: ChatInterfaceProps = {}) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [character, setCharacter] = useState<Character>(externalCharacter || "tanit");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+}: ChatInterfaceProps) => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (externalCharacter && externalCharacter !== character) {
-      setCharacter(externalCharacter);
-    }
-  }, [externalCharacter]);
-
-  useEffect(() => {
-    if (user) {
-      loadChatHistory();
-    }
-  }, [user, character]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const loadChatHistory = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("character", character)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        console.error("Error loading chat history:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const formattedMessages: Message[] = data.map((msg) => ({
-          id: msg.id,
-          content: msg.content,
-          isUser: msg.is_user,
-          character: msg.character,
-        }));
-        setMessages(formattedMessages);
-      }
-    } catch (error) {
-      console.error("Error loading chat history:", error);
-    }
-  };
-
-  const saveChatMessage = async (message: Message) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.from("chat_messages").insert({
-        user_id: user.id,
-        character: character,
-        content: message.content,
-        is_user: message.isUser,
-      });
-
-      if (error) {
-        console.error("Error saving chat message:", error);
-      }
-    } catch (error) {
-      console.error("Error saving chat message:", error);
-    }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const characterInfo = characterDetails[selectedCharacter];
+  
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      content: t(`characters.${selectedCharacter}.greeting`),
+      isUser: false,
+    },
+  ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isExpanded, setIsExpanded] = useState(fullPage);
+  const { toast } = useToast();
 
   const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content,
-      isUser: true,
-      character,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    if (user) saveChatMessage(userMessage);
-    setLoading(true);
-
+    if (!isExpanded && !fullPage) {
+      setIsExpanded(true);
+      return;
+    }
+    
     try {
-      const response = await fetch(`${import.meta.env.VITE_APP_SUPABASE_URL}/functions/v1/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_APP_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          messages: [
-            ...messages.map((msg) => ({
-              role: msg.isUser ? "user" : "assistant",
-              content: msg.content,
-            })),
-            { role: "user", content },
-          ],
-          character,
-        }),
+      setIsLoading(true);
+      setMessages((prev) => [...prev, { content, isUser: true }]);
+
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: { 
+          message: content,
+          character: selectedCharacter
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
+      if (error) {
+        console.error('Chat function error:', error);
+        throw error;
       }
 
-      const data = await response.json();
-      const botMessage: Message = {
-        id: Date.now().toString() + "-bot",
-        content: data.message,
-        isUser: false,
-        character,
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
-      if (user) saveChatMessage(botMessage);
+      setMessages((prev) => [
+        ...prev,
+        {
+          content: data.response || t('chat.errorResponse', { name: characterInfo.name }),
+          isUser: false,
+        },
+      ]);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error('Chat error:', error);
       toast({
+        title: t('chat.error'),
+        description: t('chat.errorMessage'),
         variant: "destructive",
-        title: t("chat.error"),
-        description: t("chat.errorDescription"),
       });
-
-      const errorMessage: Message = {
-        id: Date.now().toString() + "-error",
-        content: t("chat.errorMessage"),
-        isUser: false,
-        character,
-      };
-
-      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleClearChat = () => {
-    setMessages([]);
+  const handleWhatsAppConnect = async () => {
+    try {
+      if (!phoneNumber.match(/^\+?[1-9]\d{1,14}$/)) {
+        throw new Error(t('chat.invalidPhone'));
+      }
+
+      const { data, error } = await supabase.functions.invoke('whatsapp', {
+        body: { 
+          message: {
+            phoneNumber: phoneNumber,
+            character: selectedCharacter
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: t('chat.whatsappSuccess'),
+        description: t('chat.whatsappMessage', { name: characterInfo.name }),
+      });
+    } catch (error) {
+      console.error('WhatsApp error:', error);
+      toast({
+        title: t('chat.error'),
+        description: error.message || t('chat.whatsappError'),
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleCharacterChange = (newCharacter: Character) => {
-    setCharacter(newCharacter);
-    setMessages([]);
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (fullPage) {
+      navigate('/');
+    } else {
+      setIsExpanded(false);
+    }
+  };
+
+  const handleChangeCharacter = (character: Character) => {
     if (onChangeCharacter) {
-      onChangeCharacter(newCharacter);
+      onChangeCharacter(character);
+      
+      // Reset messages with the new character's greeting
+      setMessages([
+        {
+          content: t(`characters.${character}.greeting`),
+          isUser: false,
+        },
+      ]);
     }
   };
 
   return (
-    <div className="relative h-full flex flex-col bg-gradient-to-b from-gray-900 to-black text-white overflow-hidden rounded-lg shadow-lg border border-gray-800">
+    <div 
+      className={cn(
+        "flex flex-col h-full bg-[#1E1E1E]",
+        fullPage ? "w-full" : "rounded-xl overflow-hidden"
+      )}
+    >
       <ChatHeader 
-        selectedCharacter={character} 
-        isExpanded={fullPage}
+        isExpanded={isExpanded || fullPage}
+        onClose={handleClose}
+        onWhatsAppConnect={handleWhatsAppConnect}
+        phoneNumber={phoneNumber}
+        setPhoneNumber={setPhoneNumber}
+        showCloseButton={!fullPage || isExpanded}
+        selectedCharacter={selectedCharacter}
+        onChangeCharacter={handleChangeCharacter}
       />
       
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <CharacterSelector 
-          selectedCharacter={character} 
-          onSelectCharacter={handleCharacterChange}
+      <div className="flex-1 overflow-hidden relative">
+        <MessagesContainer 
+          messages={messages}
+          isLoading={isLoading}
+          isExpanded={isExpanded || fullPage}
+          selectedCharacter={selectedCharacter}
         />
         
-        <MessagesContainer 
-          messages={messages} 
-          loading={loading}
-          selectedCharacter={character}
-          scrollRef={messagesEndRef}
-        />
-      </div>
-      
-      <div className="p-4 border-t border-gray-800 bg-gray-900 space-y-2">
-        {!user && (
-          <div className="text-center mb-4 p-2 bg-blue-900/40 rounded-lg">
-            <p className="text-sm text-gray-300 mb-2">{t("auth.signInToSaveChats")}</p>
-            <div className="flex justify-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
-                onClick={() => window.location.href = '/auth'}
-              >
-                {t("auth.signIn")}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
-                onClick={() => window.location.href = '/auth'}
-              >
-                {t("auth.signUp")}
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#1E1E1E] to-transparent h-32 pointer-events-none" />
+        
         <ChatInput 
-          onSendMessage={handleSendMessage} 
-          onClearChat={handleClearChat} 
-          disabled={loading}
-          selectedCharacter={character}
+          onSend={handleSendMessage} 
+          disabled={isLoading} 
+          placeholder={isExpanded || fullPage ? t(`chat.askAbout${selectedCharacter === "tanit" ? "Nature" : "Parties"}`) : t('chat.clickToChat', { name: characterInfo.name })}
+          selectedCharacter={selectedCharacter}
         />
       </div>
     </div>
